@@ -1,5 +1,6 @@
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/session";
+import { requireAdminView } from "@/lib/session";
 import { todayISO } from "@/lib/dates";
 import { nextStudentCode } from "@/lib/codes";
 import { ButtonLink, Card, CardBody, PageHeader } from "@/components/ui";
@@ -9,7 +10,8 @@ import { StudentForm } from "../student-form";
 export const metadata = { title: "Tambah Murid" };
 
 export default async function NewStudentPage() {
-  await requireAdmin();
+  const viewer = await requireAdminView();
+  if (viewer.readOnly) redirect("/admin/murid"); // read-only: no new records
   const [subjects, parents, code] = await Promise.all([
     prisma.subject.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, isActive: true } }),
     prisma.parent.findMany({ where: { isActive: true }, orderBy: { parentCode: "asc" }, select: { id: true, name: true, parentCode: true } }),

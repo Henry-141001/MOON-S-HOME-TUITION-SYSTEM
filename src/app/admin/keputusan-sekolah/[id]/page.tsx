@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CheckCircle2, Pencil, RotateCcw, Trash2 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/session";
+import { requireAdminView } from "@/lib/session";
 import { formatDate, formatDateTime, todayISO } from "@/lib/dates";
 import { getStudentRecords } from "@/lib/records";
 import { SUBMISSION_LABELS } from "@/lib/constants";
@@ -33,7 +33,7 @@ import {
 export const metadata = { title: "Semakan Keputusan Sekolah" };
 
 export default async function SchoolExamReviewPage({ params }: PageProps<"/admin/keputusan-sekolah/[id]">) {
-  await requireAdmin();
+  await requireAdminView();
   const { id } = await params;
   const exam = await prisma.schoolExamination.findUnique({
     where: { id },

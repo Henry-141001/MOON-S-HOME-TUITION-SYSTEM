@@ -5,7 +5,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 import { fail, formObject, handleError, isoDate, ok, optionalText, parse, text } from "@/lib/action";
-import { isValidISODate, parseISODate } from "@/lib/dates";
+import { formatDate, isValidISODate, parseISODate } from "@/lib/dates";
+import { adminActor, logActivity } from "@/lib/activity";
 import type { ActionState } from "@/lib/action-state";
 import type { AttendanceStatus } from "@/generated/prisma/enums";
 
@@ -50,8 +51,13 @@ export async function saveAttendance(date: string, _prev: ActionState, formData:
   } catch (e) {
     return handleError(e);
   }
-  revalidatePath("/", "layout");
   const present = upserts.filter((u) => u.status === "PRESENT").length;
+  await logActivity(
+    adminActor(admin),
+    "attendance.save",
+    `Merekod kehadiran ${formatDate(date)}: ${present} hadir, ${upserts.length - present} tidak hadir/bersebab`,
+  );
+  revalidatePath("/", "layout");
   return ok(`Kehadiran disimpan: ${present} hadir, ${upserts.length - present} tidak hadir/bersebab.`);
 }
 
@@ -71,12 +77,13 @@ const sessionSchema = z
   .refine((v) => v.endTime > v.startTime, { message: "Masa tamat mesti selepas masa mula.", path: ["endTime"] });
 
 export async function createTuitionSession(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const parsed = parse(sessionSchema, formObject(formData));
   if (parsed.error) return parsed.error;
   const d = parsed.data;
   try {
     await prisma.tuitionSession.create({ data: { ...d, date: parseISODate(d.date) } });
+    await logActivity(adminActor(admin), "session.create", `Menjadualkan sesi "${d.title}" pada ${formatDate(d.date)} ${d.startTime}`);
   } catch (e) {
     return handleError(e);
   }
@@ -85,12 +92,13 @@ export async function createTuitionSession(_prev: ActionState, formData: FormDat
 }
 
 export async function updateTuitionSession(sessionId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const parsed = parse(sessionSchema, formObject(formData));
   if (parsed.error) return parsed.error;
   const d = parsed.data;
   try {
     await prisma.tuitionSession.update({ where: { id: sessionId }, data: { ...d, date: parseISODate(d.date) } });
+    await logActivity(adminActor(admin), "session.update", `Mengemas kini sesi "${d.title}" (${formatDate(d.date)})`);
   } catch (e) {
     return handleError(e);
   }
@@ -99,9 +107,10 @@ export async function updateTuitionSession(sessionId: string, _prev: ActionState
 }
 
 export async function deleteTuitionSession(sessionId: string): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   try {
-    await prisma.tuitionSession.delete({ where: { id: sessionId } });
+    const s = await prisma.tuitionSession.delete({ where: { id: sessionId }, select: { title: true, date: true } });
+    await logActivity(adminActor(admin), "session.delete", `Memadam sesi "${s.title}" (${formatDate(s.date)})`);
   } catch (e) {
     return handleError(e);
   }

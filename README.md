@@ -1,11 +1,19 @@
 # Moon's Home Tuition System
 
-A web-based tuition management system for Moon's Home Tuition. There are **two roles only**:
+A web-based tuition management system for Moon's Home Tuition.
 
 | Role | Logs in with | Can do |
 |---|---|---|
 | **ADMIN** (the teacher) | Admin ID + password | Everything: students, parents, subjects, attendance, tuition marks, comments, school-result review, reports, settings |
 | **PARENT** | Parent ID only (optional PIN) | View own children's profile, attendance, tuition marks, comments and charts; submit / edit / delete own children's **school** results |
+| **SUPER ADMIN** (Pemerhati) | Special access code typed into the **ID Ibu Bapa** field (optional PIN) | **View only**: every admin page, any parent's portal (as that parent sees it), and the **Log Aktiviti** (all logins and changes by the admin and parents). Cannot change anything. Not visible to the admin. |
+
+### Super admin (Pemerhati)
+- Create once: `npm run superadmin:create` — the access code (e.g. `SA-XXXX-XXXX-XXXX`) is saved in `.env` as `SUPER_ADMIN_ID`.
+- Log in: type that code into the normal **ID Ibu Bapa** box. Any other code works as a normal Parent ID.
+- New code (old one stops working): `npm run superadmin:rotate` · Add a PIN: `npm run superadmin:pin -- 123456` · Remove PIN: `npm run superadmin:pin -- off`
+- Read-only is enforced on the server: every change action requires the real admin or parent session, so the observer cannot change data even by tampering with the page. On screen, forms are disabled and change buttons hidden.
+- The activity log keeps about 13 months of history.
 
 **Stack:** Next.js 16 (App Router, Server Actions) · TypeScript · Tailwind CSS 4 · Prisma 7 · Neon PostgreSQL · Recharts · @react-pdf/renderer · deployed on Vercel.
 

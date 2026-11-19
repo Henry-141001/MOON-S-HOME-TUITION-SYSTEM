@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/session";
+import { requireAdminView } from "@/lib/session";
 import { formatLongDate, parseISODate, todayISO, toISODate } from "@/lib/dates";
 import { Card, CardHeader, EmptyState, Input, Select, Table, Textarea, buttonClass, cn, td, th } from "@/components/ui";
 import { ActionForm, ConfirmButton, Field, InlineAction, Modal, SubmitButton } from "@/components/forms";
@@ -11,7 +11,7 @@ import type { ActionState } from "@/lib/action-state";
 export const metadata = { title: "Jadual Sesi Tuisyen" };
 
 export default async function SchedulePage() {
-  await requireAdmin();
+  await requireAdminView();
   const today = parseISODate(todayISO());
   const [upcoming, past, subjects] = await Promise.all([
     prisma.tuitionSession.findMany({

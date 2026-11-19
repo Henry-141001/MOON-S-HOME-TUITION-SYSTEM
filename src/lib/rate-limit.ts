@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma";
 import type { Role } from "@/generated/prisma/enums";
 
 const WINDOW_MINUTES = 15;
-const MAX_FAILURES: Record<Role, number> = { ADMIN: 5, PARENT: 10 };
+// Super admin codes are entered in the parent field, so they share the PARENT limit.
+const MAX_FAILURES: Record<Role, number> = { ADMIN: 5, PARENT: 10, SUPER_ADMIN: 5 };
 
 /** True when this IP has too many failed logins in the last 15 minutes. */
 export async function isRateLimited(ipHash: string, kind: Role): Promise<boolean> {

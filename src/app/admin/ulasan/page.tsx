@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { MessageSquarePlus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/session";
+import { requireAdminView } from "@/lib/session";
 import { formatDate, todayISO, toISODate } from "@/lib/dates";
 import { COMMENT_LABELS } from "@/lib/constants";
 import { Badge, ButtonLink, Card, CardBody, CardHeader, EmptyState, PageHeader, RowChevron, cn } from "@/components/ui";
@@ -13,7 +13,7 @@ import { CommentForm } from "./comment-form";
 export const metadata = { title: "Ulasan Guru" };
 
 export default async function CommentsPage({ searchParams }: PageProps<"/admin/ulasan">) {
-  await requireAdmin();
+  await requireAdminView();
   const sp = await searchParams;
   const studentId = typeof sp.murid === "string" ? sp.murid : "";
 

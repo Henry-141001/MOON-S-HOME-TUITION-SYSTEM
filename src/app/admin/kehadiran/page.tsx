@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CalendarClock, ChevronLeft, ChevronRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/session";
+import { requireAdminView } from "@/lib/session";
 import { addDaysISO, formatLongDate, isValidISODate, parseISODate, todayISO } from "@/lib/dates";
 import { ButtonLink, Card, CardHeader, EmptyState, Input, buttonClass } from "@/components/ui";
 import { saveAttendance } from "@/app/admin/_actions/attendance";
@@ -10,7 +10,7 @@ import { AttendanceSheet } from "./attendance-sheet";
 export const metadata = { title: "Rekod Kehadiran" };
 
 export default async function TakeAttendancePage({ searchParams }: PageProps<"/admin/kehadiran">) {
-  await requireAdmin();
+  await requireAdminView();
   const sp = await searchParams;
   const today = todayISO();
   const date = isValidISODate(sp.tarikh) ? sp.tarikh : today;

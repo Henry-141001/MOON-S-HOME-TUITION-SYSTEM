@@ -6,6 +6,8 @@ import { assertParentOwnsStudent, requireParent } from "@/lib/session";
 import { fail, handleError, ok } from "@/lib/action";
 import { parseISODate } from "@/lib/dates";
 import { DUPLICATE_SCHOOL_EXAM, parseSchoolExamForm } from "@/lib/school-form";
+import { logActivity, parentActor, studentLabel } from "@/lib/activity";
+import { schoolExamTitle } from "@/lib/records";
 import type { ActionState } from "@/lib/action-state";
 
 /**
@@ -46,6 +48,12 @@ export async function submitSchoolExam(studentId: string, _prev: ActionState, fo
         results: { create: d.rows },
       },
     });
+    await logActivity(
+      parentActor(parent),
+      "school.submit",
+      `Menghantar keputusan sekolah: ${schoolExamTitle(d.examType, d.examName)} (${d.rows.length} subjek) — ${await studentLabel(studentId)}`,
+      studentId,
+    );
   } catch (e) {
     return handleError(e, DUPLICATE_SCHOOL_EXAM);
   }
@@ -77,6 +85,12 @@ export async function updateOwnSchoolExam(examId: string, _prev: ActionState, fo
       prisma.schoolResult.deleteMany({ where: { examId } }),
       prisma.schoolResult.createMany({ data: d.rows.map((r) => ({ ...r, examId })) }),
     ]);
+    await logActivity(
+      parentActor(parent),
+      "school.edit",
+      `Mengemas kini keputusan sekolah: ${schoolExamTitle(d.examType, d.examName)} — ${await studentLabel(owned.exam.studentId)}`,
+      owned.exam.studentId,
+    );
   } catch (e) {
     return handleError(e, DUPLICATE_SCHOOL_EXAM);
   }
@@ -89,7 +103,13 @@ export async function deleteOwnSchoolExam(examId: string): Promise<ActionState> 
   try {
     const owned = await ownedEditableExam(parent.id, examId);
     if (owned.error) return owned.error;
-    await prisma.schoolExamination.delete({ where: { id: examId } });
+    const removed = await prisma.schoolExamination.delete({ where: { id: examId }, select: { examType: true, examName: true } });
+    await logActivity(
+      parentActor(parent),
+      "school.delete",
+      `Memadam keputusan sekolah: ${schoolExamTitle(removed.examType, removed.examName)} — ${await studentLabel(owned.exam.studentId)}`,
+      owned.exam.studentId,
+    );
   } catch (e) {
     return handleError(e);
   }

@@ -1,9 +1,9 @@
-import { requireAdmin } from "@/lib/session";
+import { requireAdminView } from "@/lib/session";
 import { PageHeader } from "@/components/ui";
 import { SubNav } from "@/components/sub-nav";
 
 export default async function AttendanceLayout({ children }: LayoutProps<"/admin/kehadiran">) {
-  await requireAdmin();
+  await requireAdminView();
   return (
     <>
       <PageHeader title="Rekod Kehadiran" description="Rekod kehadiran setiap sesi tuisyen dan lihat statistik kehadiran." />

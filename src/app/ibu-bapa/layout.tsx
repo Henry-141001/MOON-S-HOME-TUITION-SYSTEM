@@ -1,5 +1,6 @@
-import { getParentChildren, requireParent } from "@/lib/session";
+import { getParentChildren, requireParentView } from "@/lib/session";
 import { logout } from "@/app/actions/auth";
+import { stopObservingParent } from "@/app/admin/_actions/observer";
 import { AppShell, type NavItem } from "@/components/app-shell";
 
 const NAV: NavItem[] = [
@@ -12,16 +13,17 @@ const NAV: NavItem[] = [
 ];
 
 export default async function ParentLayout({ children }: LayoutProps<"/ibu-bapa">) {
-  const parent = await requireParent();
+  const { parent, readOnly } = await requireParentView();
   const kids = await getParentChildren(parent.id);
   return (
     <AppShell
       nav={NAV}
-      portalLabel="Portal Ibu Bapa"
+      portalLabel={readOnly ? "Portal Ibu Bapa · Pemerhati" : "Portal Ibu Bapa"}
       userName={parent.name}
       userMeta={`ID: ${parent.parentCode}`}
       logoutAction={logout}
       childSwitcher={kids.map((k) => ({ id: k.id, name: k.fullName, code: k.studentCode }))}
+      readOnly={readOnly ? { kind: "parent", parentName: `${parent.name} (${parent.parentCode})`, exitAction: stopObservingParent } : undefined}
     >
       {children}
     </AppShell>

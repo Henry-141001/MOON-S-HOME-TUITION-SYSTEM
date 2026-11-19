@@ -13,7 +13,10 @@
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed-demo": "tsx prisma/seed-demo.ts",
-    "admin:reset-password": "tsx prisma/seed.ts --reset-password"
+    "admin:reset-password": "tsx prisma/seed.ts --reset-password",
+    "superadmin:create": "tsx prisma/super-admin.ts create",
+    "superadmin:rotate": "tsx prisma/super-admin.ts rotate",
+    "superadmin:pin": "tsx prisma/super-admin.ts pin"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.2.1",

@@ -5,16 +5,18 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 import { formObject, handleError, ok, parse, text } from "@/lib/action";
+import { adminActor, logActivity } from "@/lib/activity";
 import type { ActionState } from "@/lib/action-state";
 
 const subjectSchema = z.object({ name: text("Nama subjek", 80) });
 
 export async function createSubject(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const parsed = parse(subjectSchema, formObject(formData));
   if (parsed.error) return parsed.error;
   try {
     await prisma.subject.create({ data: { name: parsed.data.name } });
+    await logActivity(adminActor(admin), "subject.create", `Menambah subjek ${parsed.data.name}`);
   } catch (e) {
     return handleError(e, "Subjek dengan nama ini sudah wujud.");
   }
@@ -23,11 +25,13 @@ export async function createSubject(_prev: ActionState, formData: FormData): Pro
 }
 
 export async function renameSubject(subjectId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const parsed = parse(subjectSchema, formObject(formData));
   if (parsed.error) return parsed.error;
   try {
+    const before = await prisma.subject.findUniqueOrThrow({ where: { id: subjectId }, select: { name: true } });
     await prisma.subject.update({ where: { id: subjectId }, data: { name: parsed.data.name } });
+    await logActivity(adminActor(admin), "subject.update", `Menamakan semula subjek ${before.name} → ${parsed.data.name}`);
   } catch (e) {
     return handleError(e, "Subjek dengan nama ini sudah wujud.");
   }
@@ -36,9 +40,10 @@ export async function renameSubject(subjectId: string, _prev: ActionState, formD
 }
 
 export async function setSubjectActive(subjectId: string, active: boolean): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   try {
-    await prisma.subject.update({ where: { id: subjectId }, data: { isActive: active } });
+    const s = await prisma.subject.update({ where: { id: subjectId }, data: { isActive: active }, select: { name: true } });
+    await logActivity(adminActor(admin), "subject.update", `${active ? "Mengaktifkan" : "Menyahaktifkan"} subjek ${s.name}`);
   } catch (e) {
     return handleError(e);
   }
@@ -47,7 +52,7 @@ export async function setSubjectActive(subjectId: string, active: boolean): Prom
 }
 
 export async function deleteSubject(subjectId: string): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   try {
     const [exams, school] = await Promise.all([
       prisma.tuitionExamination.count({ where: { subjectId } }),
@@ -60,10 +65,11 @@ export async function deleteSubject(subjectId: string): Promise<ActionState> {
         at: Date.now(),
       };
     }
-    await prisma.$transaction([
+    const [, s] = await prisma.$transaction([
       prisma.studentSubject.deleteMany({ where: { subjectId } }),
-      prisma.subject.delete({ where: { id: subjectId } }),
+      prisma.subject.delete({ where: { id: subjectId }, select: { name: true } }),
     ]);
+    await logActivity(adminActor(admin), "subject.delete", `Memadam subjek ${s.name}`);
   } catch (e) {
     return handleError(e);
   }

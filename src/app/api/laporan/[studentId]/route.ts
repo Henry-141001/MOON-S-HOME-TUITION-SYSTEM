@@ -4,10 +4,12 @@ import { buildStudentReport } from "@/lib/report";
 import { ReportDocument } from "@/lib/report-pdf";
 import { todayISO } from "@/lib/dates";
 
-// GET /api/laporan/:studentId — downloads the student's report as a PDF (admin only).
+// GET /api/laporan/:studentId — downloads the student's report as a PDF (admin or super admin).
 export async function GET(_request: Request, ctx: RouteContext<"/api/laporan/[studentId]">) {
   const session = await getSession();
-  if (!session || session.role !== "ADMIN") return new Response("Unauthorized", { status: 401 });
+  if (!session || (session.role !== "ADMIN" && session.role !== "SUPER_ADMIN")) {
+    return new Response("Unauthorized", { status: 401 });
+  }
 
   const { studentId } = await ctx.params;
   const report = await buildStudentReport(studentId);

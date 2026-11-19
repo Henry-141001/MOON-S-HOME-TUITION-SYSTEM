@@ -9,6 +9,7 @@ import { fail, formObject, handleError, isoDate, ok, optionalText, parse, text }
 import { parseISODate } from "@/lib/dates";
 import { normaliseCode } from "@/lib/security";
 import { nextStudentCode } from "@/lib/codes";
+import { adminActor, logActivity, studentLabel } from "@/lib/activity";
 import type { ActionState } from "@/lib/action-state";
 
 const studentSchema = z.object({
@@ -36,7 +37,7 @@ async function validSubjectIds(formData: FormData) {
 }
 
 export async function createStudent(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const parsed = parse(studentSchema, formObject(formData));
   if (parsed.error) return parsed.error;
   const d = parsed.data;
@@ -63,6 +64,7 @@ export async function createStudent(_prev: ActionState, formData: FormData): Pro
       },
     });
     createdId = student.id;
+    await logActivity(adminActor(admin), "student.create", `Menambah murid ${d.fullName} (${studentCode})`, student.id);
   } catch (e) {
     return handleError(e, "ID Murid ini sudah digunakan. Sila guna ID lain.");
   }
@@ -71,7 +73,7 @@ export async function createStudent(_prev: ActionState, formData: FormData): Pro
 }
 
 export async function updateStudent(studentId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const parsed = parse(studentSchema, formObject(formData));
   if (parsed.error) return parsed.error;
   const d = parsed.data;
@@ -98,6 +100,7 @@ export async function updateStudent(studentId: string, _prev: ActionState, formD
         skipDuplicates: true,
       }),
     ]);
+    await logActivity(adminActor(admin), "student.update", `Mengemas kini maklumat murid ${d.fullName} (${d.studentCode})`, studentId);
   } catch (e) {
     return handleError(e, "ID Murid ini sudah digunakan. Sila guna ID lain.");
   }
@@ -106,9 +109,15 @@ export async function updateStudent(studentId: string, _prev: ActionState, formD
 }
 
 export async function setStudentActive(studentId: string, active: boolean): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   try {
     await prisma.student.update({ where: { id: studentId }, data: { isActive: active } });
+    await logActivity(
+      adminActor(admin),
+      active ? "student.activate" : "student.deactivate",
+      `${active ? "Mengaktifkan semula" : "Menyahaktifkan"} murid ${await studentLabel(studentId)}`,
+      studentId,
+    );
   } catch (e) {
     return handleError(e);
   }
@@ -117,9 +126,11 @@ export async function setStudentActive(studentId: string, active: boolean): Prom
 }
 
 export async function deleteStudent(studentId: string): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   try {
+    const label = await studentLabel(studentId);
     await prisma.student.delete({ where: { id: studentId } });
+    await logActivity(adminActor(admin), "student.delete", `Memadam murid ${label} secara kekal (termasuk semua rekodnya)`, studentId);
   } catch (e) {
     return handleError(e);
   }
@@ -131,7 +142,7 @@ const MAX_PHOTO_BYTES = 1.5 * 1024 * 1024;
 const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export async function uploadStudentPhoto(studentId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const file = formData.get("photo");
   if (!(file instanceof File) || file.size === 0) return fail("Sila pilih gambar.");
   if (!PHOTO_TYPES.includes(file.type)) return fail("Format gambar mesti JPG, PNG atau WEBP.");
@@ -144,6 +155,7 @@ export async function uploadStudentPhoto(studentId: string, _prev: ActionState, 
       create: { studentId, data, mimeType: file.type },
       update: { data, mimeType: file.type },
     });
+    await logActivity(adminActor(admin), "student.photo", `Memuat naik gambar murid ${await studentLabel(studentId)}`, studentId);
   } catch (e) {
     return handleError(e);
   }
@@ -152,9 +164,10 @@ export async function uploadStudentPhoto(studentId: string, _prev: ActionState, 
 }
 
 export async function removeStudentPhoto(studentId: string): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   try {
     await prisma.studentPhoto.deleteMany({ where: { studentId } });
+    await logActivity(adminActor(admin), "student.photo", `Membuang gambar murid ${await studentLabel(studentId)}`, studentId);
   } catch (e) {
     return handleError(e);
   }

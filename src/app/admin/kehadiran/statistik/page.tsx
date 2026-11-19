@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/session";
+import { requireAdminView } from "@/lib/session";
 import { formatMonth, monthBounds, parseISODate, toISODate } from "@/lib/dates";
 import { attendanceCounts, monthlyAttendance } from "@/lib/analytics";
 import { AttendanceChart } from "@/components/charts";
@@ -9,7 +9,7 @@ import { Card, CardBody, CardHeader, EmptyState, Input, PercentPill, Table, butt
 export const metadata = { title: "Statistik Kehadiran" };
 
 export default async function AttendanceStatsPage({ searchParams }: PageProps<"/admin/kehadiran/statistik">) {
-  await requireAdmin();
+  await requireAdminView();
   const sp = await searchParams;
   const month = typeof sp.bulan === "string" && /^\d{4}-\d{2}$/.test(sp.bulan) ? sp.bulan : "";
 

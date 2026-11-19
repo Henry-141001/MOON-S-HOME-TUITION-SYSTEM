@@ -5,9 +5,13 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 import { signalNavigationStart } from "@/components/navigation-progress";
+import { ReadOnlyProvider } from "@/components/forms";
 import {
+  Activity,
+  ArrowLeft,
   BarChart3,
   BookOpen,
+  Eye,
   CalendarCheck,
   ClipboardList,
   FileText,
@@ -42,9 +46,15 @@ const ICONS = {
   achievement: Trophy,
   analysis: LineChart,
   chart: BarChart3,
+  activity: Activity,
 } as const;
 
 export type NavItem = { href: string; label: string; icon: keyof typeof ICONS; exact?: boolean; badge?: number };
+
+/** Super admin (Pemerhati) read-only mode, in the admin area or viewing one parent's portal. */
+export type ReadOnlyMode =
+  | { kind: "admin" }
+  | { kind: "parent"; parentName: string; exitAction: () => Promise<void> };
 
 export function AppShell({
   nav,
@@ -53,6 +63,7 @@ export function AppShell({
   userMeta,
   logoutAction,
   childSwitcher,
+  readOnly,
   children,
 }: {
   nav: NavItem[];
@@ -61,6 +72,7 @@ export function AppShell({
   userMeta: string;
   logoutAction: () => Promise<void>;
   childSwitcher?: { id: string; name: string; code: string }[];
+  readOnly?: ReadOnlyMode;
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -165,8 +177,52 @@ export function AppShell({
         </div>
       )}
 
-      <main className="print-full mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-10 lg:py-9">{children}</main>
+      {readOnly && <ObserverBanner mode={readOnly} />}
+      <main className="print-full mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-10 lg:py-9">
+        <ReadOnlyProvider value={Boolean(readOnly)}>{children}</ReadOnlyProvider>
+      </main>
     </div>
+  );
+}
+
+/** Always-visible notice that this is a view-only observer session. */
+function ObserverBanner({ mode }: { mode: ReadOnlyMode }) {
+  return (
+    <div className="no-print sticky top-[65px] z-20 border-b border-sky-ink/20 bg-sky-soft lg:top-0">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2.5 text-sm text-sky-ink sm:px-6 lg:px-10">
+        <Eye className="size-4 shrink-0" aria-hidden="true" />
+        <p className="min-w-0 flex-1">
+          {mode.kind === "parent" ? (
+            <>
+              <strong>Mod Pemerhati:</strong> anda melihat portal <strong>{mode.parentName}</strong>. Paparan sahaja.
+            </>
+          ) : (
+            <>
+              <strong>Mod Pemerhati:</strong> paparan sahaja — tiada data boleh diubah.
+            </>
+          )}
+        </p>
+        {mode.kind === "parent" && (
+          <form action={mode.exitAction}>
+            <ExitObserveButton />
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ExitObserveButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="inline-flex h-9 items-center gap-1.5 rounded-full border border-sky-ink/30 bg-surface px-3.5 text-[13px] font-medium text-sky-ink active:scale-[0.97] disabled:opacity-60"
+    >
+      {pending ? <Loader2 className="size-4 animate-spin" /> : <ArrowLeft className="size-4" />}
+      Kembali ke Pemerhati
+    </button>
   );
 }
 

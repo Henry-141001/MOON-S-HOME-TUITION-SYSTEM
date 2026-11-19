@@ -23,6 +23,21 @@ const FormPendingContext = createContext(false);
 const ModalContext = createContext<{ close: () => void } | null>(null);
 
 /**
+ * Read-only (super admin / Pemerhati) mode. When true, every form below is
+ * disabled, save buttons and modal/inline action buttons are hidden.
+ * The server rejects changes anyway — this just keeps the screen honest.
+ */
+const ReadOnlyContext = createContext(false);
+
+export function ReadOnlyProvider({ value, children }: { value: boolean; children: ReactNode }) {
+  return <ReadOnlyContext value={value}>{children}</ReadOnlyContext>;
+}
+
+export function useReadOnly() {
+  return useContext(ReadOnlyContext);
+}
+
+/**
  * A form wired to a server action. Shows success/error messages, exposes
  * field errors to <Field>, and can reset itself or close its modal on success.
  *
@@ -52,6 +67,7 @@ export function ActionForm({
   const [, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
   const modal = useContext(ModalContext);
+  const readOnly = useReadOnly();
   const onSuccessRef = useRef(onSuccess);
   useEffect(() => {
     onSuccessRef.current = onSuccess;
@@ -76,14 +92,17 @@ export function ActionForm({
           noValidate
           onSubmit={(e) => {
             e.preventDefault();
-            if (pending) return;
+            if (pending || readOnly) return;
             const formData = new FormData(e.currentTarget);
             const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
             if (submitter?.name) formData.set(submitter.name, submitter.value);
             startTransition(() => formAction(formData));
           }}
         >
-          {children}
+          {/* A disabled fieldset disables every input and button inside it. */}
+          <fieldset disabled={readOnly} className="m-0 min-w-0 border-0 p-0">
+            {children}
+          </fieldset>
           <FormMessage state={state} showSuccess={showSuccess && !(closeOnSuccess && modal)} />
         </form>
       </FormPendingContext>
@@ -175,6 +194,8 @@ export function SubmitButton({
   pendingText?: string;
 }) {
   const pending = usePending();
+  const readOnly = useReadOnly();
+  if (readOnly) return null;
   return (
     <button type="submit" disabled={pending || rest.disabled} className={buttonClass(variant, size, className)} {...rest}>
       {pending && <Loader2 className="size-4 animate-spin" />}
@@ -230,6 +251,8 @@ export function InlineAction({
   className?: string;
 }) {
   const [state, formAction] = useActionState(action, initialState);
+  const readOnly = useReadOnly();
+  if (readOnly) return null; // delete / deactivate / approve etc. are hidden for the observer
   return (
     <form action={formAction} className={cn("inline-flex flex-col items-end", className)}>
       {children}
@@ -259,10 +282,14 @@ export function Modal({
   const ref = useRef<HTMLDialogElement>(null);
   const [open, setOpen] = useState(false);
   const [key, setKey] = useState(0);
+  const readOnly = useReadOnly();
 
   const close = () => {
     ref.current?.close();
   };
+
+  // Every modal in the app is a create/edit form, so the observer doesn't get the trigger.
+  if (readOnly) return null;
 
   return (
     <>

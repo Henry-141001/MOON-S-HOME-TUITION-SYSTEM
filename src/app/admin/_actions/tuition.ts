@@ -6,7 +6,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 import { fail, formObject, handleError, isoDate, marks, ok, optionalText, parse, text } from "@/lib/action";
-import { parseISODate } from "@/lib/dates";
+import { formatDate, parseISODate } from "@/lib/dates";
+import { adminActor, logActivity } from "@/lib/activity";
 import type { ActionState } from "@/lib/action-state";
 
 const examSchema = z.object({
@@ -30,6 +31,7 @@ export async function createTuitionExam(_prev: ActionState, formData: FormData):
       data: { ...d, date: parseISODate(d.date), createdById: admin.id },
     });
     examId = exam.id;
+    await logActivity(adminActor(admin), "tuition.exam.create", `Mencipta ujian tuisyen "${d.name}" (${formatDate(d.date)})`);
   } catch (e) {
     return handleError(e);
   }
@@ -38,7 +40,7 @@ export async function createTuitionExam(_prev: ActionState, formData: FormData):
 }
 
 export async function updateTuitionExam(examId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const parsed = parse(examSchema, formObject(formData));
   if (parsed.error) return parsed.error;
   const d = parsed.data;
@@ -50,6 +52,7 @@ export async function updateTuitionExam(examId: string, _prev: ActionState, form
       });
     }
     await prisma.tuitionExamination.update({ where: { id: examId }, data: { ...d, date: parseISODate(d.date) } });
+    await logActivity(adminActor(admin), "tuition.exam.update", `Mengemas kini ujian tuisyen "${d.name}" (${formatDate(d.date)})`);
   } catch (e) {
     return handleError(e);
   }
@@ -58,9 +61,10 @@ export async function updateTuitionExam(examId: string, _prev: ActionState, form
 }
 
 export async function deleteTuitionExam(examId: string): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   try {
-    await prisma.tuitionExamination.delete({ where: { id: examId } });
+    const exam = await prisma.tuitionExamination.delete({ where: { id: examId }, select: { name: true, date: true } });
+    await logActivity(adminActor(admin), "tuition.exam.delete", `Memadam ujian tuisyen "${exam.name}" (${formatDate(exam.date)}) berserta markahnya`);
   } catch (e) {
     return handleError(e);
   }
@@ -73,8 +77,8 @@ export async function deleteTuitionExam(examId: string): Promise<ActionState> {
  * An empty mark removes that student's result for this test.
  */
 export async function saveTuitionResults(examId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
-  await requireAdmin();
-  const exam = await prisma.tuitionExamination.findUnique({ where: { id: examId }, select: { totalMarks: true } });
+  const admin = await requireAdmin();
+  const exam = await prisma.tuitionExamination.findUnique({ where: { id: examId }, select: { totalMarks: true, name: true, date: true } });
   if (!exam) return fail("Ujian tidak dijumpai.");
 
   const studentIds = [...new Set(formData.getAll("studentIds").map(String))];
@@ -114,6 +118,11 @@ export async function saveTuitionResults(examId: string, _prev: ActionState, for
   } catch (e) {
     return handleError(e);
   }
+  await logActivity(
+    adminActor(admin),
+    "tuition.marks.save",
+    `Menyimpan markah ujian "${exam.name}" (${formatDate(exam.date)}) untuk ${upserts.length} murid`,
+  );
   revalidatePath("/", "layout");
   return ok(`Markah disimpan untuk ${upserts.length} murid.`);
 }

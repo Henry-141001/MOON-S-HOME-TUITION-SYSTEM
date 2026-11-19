@@ -7,13 +7,11 @@ import { randomToken, sha256 } from "@/lib/security";
 import type { Role } from "@/generated/prisma/enums";
 
 export const SESSION_COOKIE = "mht_session";
-const ADMIN_SESSION_DAYS = 7;
-const PARENT_SESSION_DAYS = 30;
+const SESSION_DAYS: Record<Role, number> = { ADMIN: 7, PARENT: 30, SUPER_ADMIN: 1 };
 
 export async function createSession(role: Role, accountId: string) {
   const token = randomToken();
-  const days = role === "ADMIN" ? ADMIN_SESSION_DAYS : PARENT_SESSION_DAYS;
-  const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+  const expiresAt = new Date(Date.now() + SESSION_DAYS[role] * 24 * 60 * 60 * 1000);
 
   await prisma.session.create({
     data: {
@@ -21,6 +19,7 @@ export async function createSession(role: Role, accountId: string) {
       role,
       adminId: role === "ADMIN" ? accountId : null,
       parentId: role === "PARENT" ? accountId : null,
+      superAdminId: role === "SUPER_ADMIN" ? accountId : null,
       expiresAt,
     },
   });
@@ -33,11 +32,12 @@ export async function createSession(role: Role, accountId: string) {
     expires: expiresAt,
   });
 
-  // Opportunistic cleanup of expired sessions and old login attempts.
-  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  // Opportunistic cleanup of expired sessions, old login attempts and very old activity.
+  const now = Date.now();
   await Promise.all([
     prisma.session.deleteMany({ where: { expiresAt: { lt: new Date() } } }),
-    prisma.loginAttempt.deleteMany({ where: { createdAt: { lt: weekAgo } } }),
+    prisma.loginAttempt.deleteMany({ where: { createdAt: { lt: new Date(now - 7 * 864e5) } } }),
+    prisma.activityLog.deleteMany({ where: { createdAt: { lt: new Date(now - 400 * 864e5) } } }),
   ]);
 }
 
@@ -58,7 +58,13 @@ type ParentSession = {
   sessionId: string;
   parent: { id: string; parentCode: string; name: string };
 };
-export type CurrentSession = AdminSession | ParentSession;
+type SuperAdminSession = {
+  role: "SUPER_ADMIN";
+  sessionId: string;
+  superAdmin: { id: string; name: string };
+  observeParentId: string | null;
+};
+export type CurrentSession = AdminSession | ParentSession | SuperAdminSession;
 
 /** Reads and validates the session cookie against the database. Cached per request. */
 export const getSession = cache(async (): Promise<CurrentSession | null> => {
@@ -70,6 +76,7 @@ export const getSession = cache(async (): Promise<CurrentSession | null> => {
     include: {
       admin: { select: { id: true, loginId: true, name: true } },
       parent: { select: { id: true, parentCode: true, name: true, isActive: true } },
+      superAdmin: { select: { id: true, name: true, isActive: true } },
     },
   });
   if (!session || session.expiresAt < new Date()) return null;
@@ -81,22 +88,86 @@ export const getSession = cache(async (): Promise<CurrentSession | null> => {
     const { id, parentCode, name } = session.parent;
     return { role: "PARENT", sessionId: session.id, parent: { id, parentCode, name } };
   }
+  if (session.role === "SUPER_ADMIN" && session.superAdmin?.isActive) {
+    const { id, name } = session.superAdmin;
+    return { role: "SUPER_ADMIN", sessionId: session.id, superAdmin: { id, name }, observeParentId: session.observeParentId };
+  }
   return null;
 });
 
-/** Call at the top of every admin page, server action and route handler. */
+// ───────── Admin area ─────────
+
+/**
+ * WRITE access to admin data. Use in every admin server action.
+ * The super admin (read-only) is sent back to the dashboard and nothing changes.
+ */
 export async function requireAdmin() {
   const session = await getSession();
+  if (session?.role === "SUPER_ADMIN") redirect("/admin");
   if (!session || session.role !== "ADMIN") redirect("/?peranan=admin");
   return session.admin;
 }
 
-/** Call at the top of every parent page, server action and route handler. */
+export type AdminViewer = {
+  id: string;
+  name: string;
+  loginId: string;
+  role: "ADMIN" | "SUPER_ADMIN";
+  /** true for the super admin: show data, never allow changes */
+  readOnly: boolean;
+};
+
+/** READ access to admin pages: the admin, or the super admin in read-only mode. */
+export async function requireAdminView(): Promise<AdminViewer> {
+  const session = await getSession();
+  if (session?.role === "ADMIN") return { ...session.admin, role: "ADMIN", readOnly: false };
+  if (session?.role === "SUPER_ADMIN") {
+    return { id: session.superAdmin.id, name: session.superAdmin.name, loginId: "PEMERHATI", role: "SUPER_ADMIN", readOnly: true };
+  }
+  redirect("/?peranan=admin");
+}
+
+/** Pages and actions that only the super admin may use (activity log, observing parents). */
+export async function requireSuperAdmin() {
+  const session = await getSession();
+  if (!session || session.role !== "SUPER_ADMIN") redirect("/");
+  return session;
+}
+
+// ───────── Parent area ─────────
+
+/**
+ * WRITE access as a parent. Use in every parent server action.
+ * A super admin viewing a parent's portal is sent back and nothing changes.
+ */
 export async function requireParent() {
   const session = await getSession();
+  if (session?.role === "SUPER_ADMIN") redirect("/ibu-bapa");
   if (!session || session.role !== "PARENT") redirect("/");
   return session.parent;
 }
+
+export type ParentViewer = {
+  parent: { id: string; parentCode: string; name: string };
+  /** true when the super admin is viewing this parent's portal */
+  readOnly: boolean;
+};
+
+/** READ access to the parent portal: the parent, or the super admin viewing one parent. */
+export const requireParentView = cache(async (): Promise<ParentViewer> => {
+  const session = await getSession();
+  if (session?.role === "PARENT") return { parent: session.parent, readOnly: false };
+  if (session?.role === "SUPER_ADMIN") {
+    if (!session.observeParentId) redirect("/admin/ibu-bapa");
+    const parent = await prisma.parent.findUnique({
+      where: { id: session.observeParentId },
+      select: { id: true, parentCode: true, name: true },
+    });
+    if (!parent) redirect("/admin/ibu-bapa");
+    return { parent, readOnly: true };
+  }
+  redirect("/");
+});
 
 /** The active children linked to this parent — the ONLY students a parent may see. */
 export const getParentChildren = cache(async (parentId: string) => {
@@ -124,7 +195,7 @@ export const getParentChildren = cache(async (parentId: string) => {
 });
 
 /**
- * Resolves which child a parent is viewing. Falls back to the first child and
+ * Resolves which child is being viewed. Falls back to the first child and
  * never returns a student who does not belong to this parent.
  */
 export async function resolveParentChild(parentId: string, requestedStudentId?: string | null) {

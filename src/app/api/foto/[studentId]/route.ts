@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { assertParentOwnsStudent, getSession } from "@/lib/session";
 
-// GET /api/foto/:studentId — student photo, only for the admin or that student's own parent.
+// GET /api/foto/:studentId — student photo, only for the admin, the super admin (read-only
+// observer) or that student's own parent.
 export async function GET(_request: Request, ctx: RouteContext<"/api/foto/[studentId]">) {
   const { studentId } = await ctx.params;
   const session = await getSession();

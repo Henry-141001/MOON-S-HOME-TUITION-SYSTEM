@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CalendarCheck, FileText, Pencil, Plus, Power, Trash2 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/session";
+import { requireAdminView } from "@/lib/session";
 import { formatDate, toISODate } from "@/lib/dates";
 import { getStudentRecords } from "@/lib/records";
 import {
@@ -52,7 +52,7 @@ const TABS = [
 ] as const;
 
 export default async function StudentProfilePage({ params, searchParams }: PageProps<"/admin/murid/[id]">) {
-  await requireAdmin();
+  await requireAdminView();
   const { id } = await params;
   const sp = await searchParams;
   const tab = TABS.find((t) => t.key === sp.tab)?.key ?? "maklumat";

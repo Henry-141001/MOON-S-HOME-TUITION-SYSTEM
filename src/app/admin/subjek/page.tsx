@@ -1,6 +1,6 @@
 import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/session";
+import { requireAdminView } from "@/lib/session";
 import { Badge, Card, CardBody, CardHeader, EmptyState, Input, PageHeader, Table, cn, td, th } from "@/components/ui";
 import { ActionForm, ConfirmButton, Field, InlineAction, Modal, SubmitButton } from "@/components/forms";
 import { createSubject, deleteSubject, renameSubject, setSubjectActive } from "@/app/admin/_actions/subjects";
@@ -8,7 +8,7 @@ import { createSubject, deleteSubject, renameSubject, setSubjectActive } from "@
 export const metadata = { title: "Subjek Tuisyen" };
 
 export default async function SubjectsPage() {
-  await requireAdmin();
+  await requireAdminView();
   const subjects = await prisma.subject.findMany({
     orderBy: [{ isActive: "desc" }, { name: "asc" }],
     include: { _count: { select: { students: true, tuitionExams: true, schoolResults: true } } },

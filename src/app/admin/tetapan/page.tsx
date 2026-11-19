@@ -1,6 +1,7 @@
 import { KeyRound, School, ShieldAlert, Trash2, UserRound } from "lucide-react";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/session";
+import { requireAdminView } from "@/lib/session";
 import { Card, CardBody, CardHeader, Input, PageHeader, Textarea } from "@/components/ui";
 import { ActionForm, Field, SubmitButton } from "@/components/forms";
 import { changePassword, deleteDemoData, updateAdminProfile, updateCentreSettings } from "@/app/admin/_actions/settings";
@@ -8,7 +9,8 @@ import { changePassword, deleteDemoData, updateAdminProfile, updateCentreSetting
 export const metadata = { title: "Tetapan" };
 
 export default async function SettingsPage() {
-  const admin = await requireAdmin();
+  const admin = await requireAdminView();
+  if (admin.readOnly) redirect("/admin"); // the observer has nothing to manage here
   const [settings, demoStudents, demoParents, parentsWithoutPin, totalParents] = await Promise.all([
     prisma.appSetting.findUnique({ where: { id: 1 } }),
     prisma.student.count({ where: { isDemo: true } }),

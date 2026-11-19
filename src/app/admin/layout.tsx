@@ -1,10 +1,10 @@
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/session";
+import { requireAdminView } from "@/lib/session";
 import { logout } from "@/app/actions/auth";
 import { AppShell, type NavItem } from "@/components/app-shell";
 
 export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
-  const admin = await requireAdmin();
+  const viewer = await requireAdminView();
   const pending = await prisma.schoolExamination.count({ where: { status: "PENDING", student: { isActive: true } } });
 
   const nav: NavItem[] = [
@@ -17,11 +17,21 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
     { href: "/admin/ulasan", label: "Ulasan Guru", icon: "comments" },
     { href: "/admin/keputusan-sekolah", label: "Keputusan Ujian Sekolah", icon: "school", badge: pending },
     { href: "/admin/laporan", label: "Laporan", icon: "reports" },
-    { href: "/admin/tetapan", label: "Tetapan", icon: "settings" },
+    // The observer gets the activity log instead of the admin's settings.
+    viewer.readOnly
+      ? { href: "/admin/aktiviti", label: "Log Aktiviti", icon: "activity" }
+      : { href: "/admin/tetapan", label: "Tetapan", icon: "settings" },
   ];
 
   return (
-    <AppShell nav={nav} portalLabel="Portal Admin" userName={admin.name} userMeta={`ID: ${admin.loginId}`} logoutAction={logout}>
+    <AppShell
+      nav={nav}
+      portalLabel={viewer.readOnly ? "Pemerhati · Paparan sahaja" : "Portal Admin"}
+      userName={viewer.name}
+      userMeta={viewer.readOnly ? "Super Admin (Pemerhati)" : `ID: ${viewer.loginId}`}
+      logoutAction={logout}
+      readOnly={viewer.readOnly ? { kind: "admin" } : undefined}
+    >
       {children}
     </AppShell>
   );

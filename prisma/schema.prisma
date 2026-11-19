@@ -16,6 +16,7 @@ datasource db {
 enum Role {
   ADMIN
   PARENT
+  SUPER_ADMIN // Pemerhati: read-only observer of all admin and parent data
 }
 
 enum AttendanceStatus {
@@ -87,6 +88,22 @@ model Parent {
   submissions SchoolExamination[]
 
   @@map("parents")
+}
+
+/// Read-only observer ("Pemerhati"). Logs in through the Parent ID field with
+/// a long, random access code. Cannot change any data. Not visible to the admin.
+model SuperAdmin {
+  id         String   @id @default(cuid())
+  accessCode String   @unique /// e.g. SA-K7QX-M2PA-9RTD
+  name       String
+  pinHash    String? /// optional extra PIN, same flow as parents
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  sessions Session[]
+
+  @@map("super_admins")
 }
 
 // ───────────────────────── Students ─────────────────────────
@@ -316,15 +333,19 @@ model SchoolResult {
 model Session {
   id         String   @id @default(cuid())
   tokenHash  String   @unique
-  role       Role
-  adminId    String?
-  parentId   String?
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-  lastSeenAt DateTime @default(now())
+  role            Role
+  adminId         String?
+  parentId        String?
+  superAdminId    String?
+  /// Super admin only: the parent whose portal is being viewed (read-only).
+  observeParentId String?
+  expiresAt       DateTime
+  createdAt       DateTime @default(now())
+  lastSeenAt      DateTime @default(now())
 
-  admin  Admin?  @relation(fields: [adminId], references: [id], onDelete: Cascade)
-  parent Parent? @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  admin      Admin?      @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  parent     Parent?     @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  superAdmin SuperAdmin? @relation(fields: [superAdminId], references: [id], onDelete: Cascade)
 
   @@index([expiresAt])
   @@map("sessions")
@@ -340,6 +361,23 @@ model LoginAttempt {
 
   @@index([ipHash, kind, createdAt])
   @@map("login_attempts")
+}
+
+/// Audit trail of logins and every change made by the admin and parents.
+/// Shown only to the super admin.
+model ActivityLog {
+  id        String   @id @default(cuid())
+  actorRole Role? /// null = unknown visitor (failed login)
+  actorId   String?
+  actorName String
+  action    String /// machine key, e.g. "attendance.save"
+  summary   String /// human-readable Malay description
+  studentId String? /// related student, if any (no FK so history survives deletes)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([actorRole, createdAt])
+  @@map("activity_logs")
 }
 
 /// Single-row table for tuition centre details used on reports.

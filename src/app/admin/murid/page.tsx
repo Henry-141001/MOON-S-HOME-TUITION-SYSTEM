@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Plus, Search } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/session";
+import { requireAdminView } from "@/lib/session";
 import { formatDate } from "@/lib/dates";
 import { Badge, ButtonLink, Card, DemoBadge, EmptyState, Input, PageHeader, Select, Table, buttonClass, cn, linkClass, td, th } from "@/components/ui";
 import { StudentAvatar } from "@/components/records";
@@ -9,7 +9,7 @@ import { StudentAvatar } from "@/components/records";
 export const metadata = { title: "Maklumat Murid" };
 
 export default async function StudentsPage({ searchParams }: PageProps<"/admin/murid">) {
-  await requireAdmin();
+  const viewer = await requireAdminView();
   const sp = await searchParams;
   const q = typeof sp.q === "string" ? sp.q.trim() : "";
   const status = sp.status === "semua" || sp.status === "tidak-aktif" ? sp.status : "aktif";
@@ -50,9 +50,11 @@ export default async function StudentsPage({ searchParams }: PageProps<"/admin/m
         title="Maklumat Murid"
         description="Urus profil murid, subjek dan pautan ibu bapa."
         actions={
-          <ButtonLink href="/admin/murid/baru">
-            <Plus className="size-4" /> Tambah Murid
-          </ButtonLink>
+          !viewer.readOnly && (
+            <ButtonLink href="/admin/murid/baru">
+              <Plus className="size-4" /> Tambah Murid
+            </ButtonLink>
+          )
         }
       />
 
@@ -75,7 +77,7 @@ export default async function StudentsPage({ searchParams }: PageProps<"/admin/m
         {students.length === 0 ? (
           <EmptyState
             title={q ? "Tiada murid sepadan dengan carian" : "Belum ada murid"}
-            action={!q && <ButtonLink href="/admin/murid/baru" variant="soft" size="sm">Tambah murid pertama</ButtonLink>}
+            action={!q && !viewer.readOnly && <ButtonLink href="/admin/murid/baru" variant="soft" size="sm">Tambah murid pertama</ButtonLink>}
           />
         ) : (
           <Table>

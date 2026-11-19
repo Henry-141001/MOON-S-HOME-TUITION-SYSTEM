@@ -1,17 +1,19 @@
 import Link from "next/link";
 import { KeyRound, Plus, ShieldCheck } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/session";
+import { requireAdminView } from "@/lib/session";
 import { Badge, ButtonLink, Card, DemoBadge, EmptyState, PageHeader, Table, cn, linkClass, td, th } from "@/components/ui";
 import { Modal } from "@/components/forms";
 import { createParent } from "@/app/admin/_actions/parents";
 import { ParentForm } from "./parent-form";
 import { CopyCode } from "./copy-code";
+import { ObserveParentButton } from "./observe-button";
+import { observeParent } from "@/app/admin/_actions/observer";
 
 export const metadata = { title: "Maklumat Ibu Bapa" };
 
 export default async function ParentsPage() {
-  await requireAdmin();
+  const viewer = await requireAdminView();
   const [parents, students] = await Promise.all([
     prisma.parent.findMany({
       orderBy: [{ isActive: "desc" }, { parentCode: "asc" }],
@@ -109,9 +111,12 @@ export default async function ParentsPage() {
                   </td>
                   <td className={td}>{p.isActive ? <Badge tone="sage">Aktif</Badge> : <Badge tone="neutral">Tidak Aktif</Badge>}</td>
                   <td className={cn(td, "text-right")}>
-                    <ButtonLink href={`/admin/ibu-bapa/${p.id}`} variant="ghost" size="sm" arrow>
-                      Urus
-                    </ButtonLink>
+                    <div className="flex justify-end gap-2">
+                      {viewer.readOnly && <ObserveParentButton action={observeParent.bind(null, p.id)} />}
+                      <ButtonLink href={`/admin/ibu-bapa/${p.id}`} variant="ghost" size="sm" arrow>
+                        {viewer.readOnly ? "Butiran" : "Urus"}
+                      </ButtonLink>
+                    </div>
                   </td>
                 </tr>
               ))}

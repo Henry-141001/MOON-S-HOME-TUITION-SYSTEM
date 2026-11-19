@@ -1,5 +1,5 @@
 import "server-only";
-import { requireParent, resolveParentChild } from "@/lib/session";
+import { requireParentView, resolveParentChild } from "@/lib/session";
 import { Card, EmptyState } from "@/components/ui";
 
 /**
@@ -8,11 +8,11 @@ import { Card, EmptyState } from "@/components/ui";
  * so a tampered ?m= value silently falls back to their first child.
  */
 export async function getParentView(searchParams: Promise<Record<string, string | string[] | undefined>>) {
-  const parent = await requireParent();
+  const { parent, readOnly } = await requireParentView();
   const sp = await searchParams;
   const requested = typeof sp.m === "string" ? sp.m : null;
   const { children, current } = await resolveParentChild(parent.id, requested);
-  return { parent, children, child: current };
+  return { parent, children, child: current, readOnly };
 }
 
 export function NoChildLinked() {

@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin, getSession } from "@/lib/session";
 import { fail, formObject, handleError, ok, optionalText, parse, text } from "@/lib/action";
 import { hashSecret, normaliseCode, verifySecret } from "@/lib/security";
+import { adminActor, logActivity } from "@/lib/activity";
 import type { ActionState } from "@/lib/action-state";
 
 const passwordSchema = z
@@ -35,6 +36,7 @@ export async function changePassword(_prev: ActionState, formData: FormData): Pr
       // Sign out every other admin session (e.g. another device).
       prisma.session.deleteMany({ where: { adminId: admin.id, id: { not: currentSessionId } } }),
     ]);
+    await logActivity(adminActor(admin), "settings.password", "Menukar kata laluan admin");
   } catch (e) {
     return handleError(e);
   }
@@ -56,6 +58,7 @@ export async function updateAdminProfile(_prev: ActionState, formData: FormData)
   if (parsed.error) return parsed.error;
   try {
     await prisma.admin.update({ where: { id: admin.id }, data: parsed.data });
+    await logActivity(adminActor({ id: admin.id, name: parsed.data.name }), "settings.profile", `Mengemas kini profil admin (ID: ${parsed.data.loginId})`);
   } catch (e) {
     return handleError(e, "ID Admin ini sudah digunakan.");
   }
@@ -71,11 +74,12 @@ const centreSchema = z.object({
 });
 
 export async function updateCentreSettings(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const parsed = parse(centreSchema, formObject(formData));
   if (parsed.error) return parsed.error;
   try {
     await prisma.appSetting.upsert({ where: { id: 1 }, create: { id: 1, ...parsed.data }, update: parsed.data });
+    await logActivity(adminActor(admin), "settings.centre", "Mengemas kini maklumat pusat tuisyen");
   } catch (e) {
     return handleError(e);
   }
@@ -85,7 +89,7 @@ export async function updateCentreSettings(_prev: ActionState, formData: FormDat
 
 /** Removes every record flagged as demo (students cascade to their records). */
 export async function deleteDemoData(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   if (String(formData.get("confirm") ?? "").trim().toUpperCase() !== "PADAM") {
     return fail("Taip PADAM untuk mengesahkan.", { confirm: "Taip PADAM untuk mengesahkan." });
   }
@@ -96,6 +100,7 @@ export async function deleteDemoData(_prev: ActionState, formData: FormData): Pr
       prisma.tuitionExamination.deleteMany({ where: { isDemo: true } }),
       prisma.tuitionSession.deleteMany({ where: { isDemo: true } }),
     ]);
+    await logActivity(adminActor(admin), "settings.demo", `Memadam data demo: ${students.count} murid, ${parents.count} akaun ibu bapa`);
     revalidatePath("/", "layout");
     return ok(`Data demo dipadam: ${students.count} murid dan ${parents.count} akaun ibu bapa.`);
   } catch (e) {

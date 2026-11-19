@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { Download } from "lucide-react";
-import { requireAdmin } from "@/lib/session";
+import { requireAdminView } from "@/lib/session";
 import { buildStudentReport } from "@/lib/report";
 import { formatDate, formatLongDate, formatMonth, todayISO } from "@/lib/dates";
 import { COMMENT_LABELS, gradeFor } from "@/lib/constants";
@@ -12,7 +12,7 @@ import { PrintButton } from "./print-button";
 export const metadata = { title: "Laporan Prestasi" };
 
 export default async function StudentReportPage({ params }: PageProps<"/admin/laporan/[id]">) {
-  await requireAdmin();
+  await requireAdminView();
   const { id } = await params;
   const r = await buildStudentReport(id);
   if (!r) notFound();

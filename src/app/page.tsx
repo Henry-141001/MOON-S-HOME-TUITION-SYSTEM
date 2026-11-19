@@ -9,7 +9,7 @@ const TAGLINE = "Memantau perkembangan anak anda, dengan mudah.";
 
 export default async function LoginPage({ searchParams }: PageProps<"/">) {
   const session = await getSession();
-  if (session?.role === "ADMIN") redirect("/admin");
+  if (session?.role === "ADMIN" || session?.role === "SUPER_ADMIN") redirect("/admin");
   if (session?.role === "PARENT") redirect("/ibu-bapa");
 
   const { peranan } = await searchParams;

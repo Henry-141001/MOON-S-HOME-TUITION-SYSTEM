@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { KeyRound, Power, RefreshCw, Trash2 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/session";
+import { requireAdminView } from "@/lib/session";
 import { formatDateTime } from "@/lib/dates";
 import { Badge, ButtonLink, Card, CardBody, CardHeader, DemoBadge, Input, PageHeader } from "@/components/ui";
 import { ActionForm, ConfirmButton, Field, InlineAction, SubmitButton } from "@/components/forms";
@@ -15,11 +15,13 @@ import {
 } from "@/app/admin/_actions/parents";
 import { ParentForm } from "../parent-form";
 import { CopyCode } from "../copy-code";
+import { ObserveParentButton } from "../observe-button";
+import { observeParent } from "@/app/admin/_actions/observer";
 
 export const metadata = { title: "Akaun Ibu Bapa" };
 
 export default async function ParentDetailPage({ params }: PageProps<"/admin/ibu-bapa/[id]">) {
-  await requireAdmin();
+  const viewer = await requireAdminView();
   const { id } = await params;
   const [parent, students] = await Promise.all([
     prisma.parent.findUnique({
@@ -48,7 +50,14 @@ export default async function ParentDetailPage({ params }: PageProps<"/admin/ibu
             {parent.isDemo && <DemoBadge />}
           </span>
         }
-        actions={<ButtonLink href="/admin/ibu-bapa" variant="secondary">Kembali</ButtonLink>}
+        actions={
+          <>
+            {viewer.readOnly && <ObserveParentButton action={observeParent.bind(null, parent.id)} size="md" />}
+            <ButtonLink href="/admin/ibu-bapa" variant="secondary">
+              Kembali
+            </ButtonLink>
+          </>
+        }
       />
 
       <div className="grid gap-6 lg:grid-cols-3">

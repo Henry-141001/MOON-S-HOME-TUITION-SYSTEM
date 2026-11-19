@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { Download, FileText } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/session";
+import { requireAdminView } from "@/lib/session";
 import { Card, DemoBadge, EmptyState, PageHeader, Table, buttonClass, cn, td, th } from "@/components/ui";
 import { StudentAvatar } from "@/components/records";
 
 export const metadata = { title: "Laporan" };
 
 export default async function ReportsPage() {
-  await requireAdmin();
+  await requireAdminView();
   const students = await prisma.student.findMany({
     where: { isActive: true },
     orderBy: { fullName: "asc" },

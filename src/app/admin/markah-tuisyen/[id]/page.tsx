@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { Pencil, Trash2 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/session";
+import { requireAdminView } from "@/lib/session";
 import { formatLongDate, toISODate } from "@/lib/dates";
 import { average, percent } from "@/lib/analytics";
 import { ButtonLink, Card, CardHeader, DemoBadge, EmptyState, PageHeader, PercentPill } from "@/components/ui";
@@ -13,7 +13,7 @@ import { MarksSheet } from "./marks-sheet";
 export const metadata = { title: "Markah Ujian" };
 
 export default async function TuitionExamPage({ params }: PageProps<"/admin/markah-tuisyen/[id]">) {
-  await requireAdmin();
+  await requireAdminView();
   const { id } = await params;
   const exam = await prisma.tuitionExamination.findUnique({
     where: { id },

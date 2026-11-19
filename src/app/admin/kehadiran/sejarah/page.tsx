@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/session";
+import { requireAdminView } from "@/lib/session";
 import { formatLongDate, formatMonth, monthBounds, parseISODate, todayISO, toISODate } from "@/lib/dates";
 import { attendanceCounts } from "@/lib/analytics";
 import { Card, CardHeader, EmptyState, Input, PercentPill, Table, buttonClass, cn, td, th } from "@/components/ui";
@@ -8,7 +8,7 @@ import { Card, CardHeader, EmptyState, Input, PercentPill, Table, buttonClass, c
 export const metadata = { title: "Sejarah Kehadiran" };
 
 export default async function AttendanceHistoryPage({ searchParams }: PageProps<"/admin/kehadiran/sejarah">) {
-  await requireAdmin();
+  await requireAdminView();
   const sp = await searchParams;
   const month = typeof sp.bulan === "string" && /^\d{4}-\d{2}$/.test(sp.bulan) ? sp.bulan : todayISO().slice(0, 7);
   const { start, end } = monthBounds(month);

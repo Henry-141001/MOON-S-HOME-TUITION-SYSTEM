@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CalendarCheck, CalendarClock, CalendarX, ChevronRight, ClipboardCheck, GraduationCap, Percent } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/session";
+import { requireAdminView } from "@/lib/session";
 import { todayISO, parseISODate, toISODate, formatDate, formatLongDate, formatShortDate } from "@/lib/dates";
 import { attendanceCounts, average, percent } from "@/lib/analytics";
 import { COMMENT_LABELS, SUBMISSION_LABELS } from "@/lib/constants";
@@ -26,7 +26,7 @@ import { AttendanceChart, PercentBarChart } from "@/components/charts";
 export const metadata = { title: "Dashboard" };
 
 export default async function AdminDashboard() {
-  const admin = await requireAdmin();
+  const admin = await requireAdminView();
   const today = todayISO();
   const todayDate = parseISODate(today);
   const activeStudent = { student: { isActive: true } };
@@ -119,10 +119,10 @@ export default async function AdminDashboard() {
         actions={
           <>
             <ButtonLink href="/admin/kehadiran" variant="primary">
-              <CalendarCheck className="size-4" /> Ambil Kehadiran
+              <CalendarCheck className="size-4" /> {admin.readOnly ? "Lihat Kehadiran" : "Ambil Kehadiran"}
             </ButtonLink>
             <ButtonLink href="/admin/markah-tuisyen" variant="secondary">
-              Masukkan Markah
+              {admin.readOnly ? "Lihat Markah" : "Masukkan Markah"}
             </ButtonLink>
           </>
         }

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/session";
+import { requireAdminView } from "@/lib/session";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { average, percent } from "@/lib/analytics";
 import { SUBMISSION_LABELS, SUBMISSION_STATUSES } from "@/lib/constants";
@@ -10,7 +10,7 @@ import type { SubmissionStatus } from "@/generated/prisma/enums";
 export const metadata = { title: "Keputusan Ujian Sekolah" };
 
 export default async function SchoolResultsPage({ searchParams }: PageProps<"/admin/keputusan-sekolah">) {
-  await requireAdmin();
+  await requireAdminView();
   const sp = await searchParams;
   const status = SUBMISSION_STATUSES.find((s) => s === sp.status) as SubmissionStatus | undefined;
   const studentId = typeof sp.murid === "string" ? sp.murid : "";

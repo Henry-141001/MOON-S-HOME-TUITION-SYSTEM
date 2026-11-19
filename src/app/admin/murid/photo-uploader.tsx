@@ -3,6 +3,7 @@
 import { useActionState, useRef, useState, useTransition } from "react";
 import { Camera, Loader2, Trash2 } from "lucide-react";
 import { buttonClass } from "@/components/ui";
+import { useReadOnly } from "@/components/forms";
 import { initialState, type ActionState } from "@/lib/action-state";
 
 const MAX_SIDE = 600;
@@ -35,6 +36,7 @@ export function PhotoUploader({
   const [clientError, setClientError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [, startUpload] = useTransition();
+  const readOnly = useReadOnly();
 
   async function onPick(e: React.ChangeEvent<HTMLInputElement>) {
     setClientError(null);
@@ -53,6 +55,8 @@ export function PhotoUploader({
   }
 
   const message = clientError ?? (state.status === "error" ? state.message : removeState.status === "error" ? removeState.message : null);
+
+  if (readOnly) return null;
 
   return (
     <div className="flex flex-col items-start gap-1.5">

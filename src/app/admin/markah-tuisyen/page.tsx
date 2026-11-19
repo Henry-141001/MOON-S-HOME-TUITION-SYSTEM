@@ -1,6 +1,6 @@
 import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/session";
+import { requireAdminView } from "@/lib/session";
 import { formatDate, todayISO } from "@/lib/dates";
 import { average, percent } from "@/lib/analytics";
 import { ButtonLink, Card, DemoBadge, EmptyState, PageHeader, PercentPill, Select, Table, buttonClass, cn, td, th } from "@/components/ui";
@@ -12,7 +12,7 @@ import { StudentJump } from "./student-jump";
 export const metadata = { title: "Markah Ujian Tuisyen" };
 
 export default async function TuitionExamsPage({ searchParams }: PageProps<"/admin/markah-tuisyen">) {
-  await requireAdmin();
+  await requireAdminView();
   const sp = await searchParams;
   const subjectFilter = typeof sp.subjek === "string" ? sp.subjek : "";
 

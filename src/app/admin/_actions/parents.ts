@@ -8,6 +8,7 @@ import { requireAdmin } from "@/lib/session";
 import { fail, formObject, handleError, ok, optionalText, parse, text } from "@/lib/action";
 import { generateParentCode, regenerateParentCode } from "@/lib/codes";
 import { hashSecret, normaliseCode } from "@/lib/security";
+import { adminActor, logActivity } from "@/lib/activity";
 import type { ActionState } from "@/lib/action-state";
 
 const parentCodeField = z
@@ -37,7 +38,7 @@ async function childLinks(formData: FormData) {
 }
 
 export async function createParent(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const parsed = parse(parentSchema, formObject(formData));
   if (parsed.error) return parsed.error;
   const d = parsed.data;
@@ -47,6 +48,7 @@ export async function createParent(_prev: ActionState, formData: FormData): Prom
     await prisma.parent.create({
       data: { parentCode, name: d.name, phone: d.phone, notes: d.notes, children: { create: links } },
     });
+    await logActivity(adminActor(admin), "parent.create", `Mencipta akaun ibu bapa ${d.name} (${parentCode}), ${links.length} anak dipautkan`);
     revalidatePath("/", "layout");
     return ok(`Akaun ibu bapa telah dicipta. ID Ibu Bapa: ${parentCode}`);
   } catch (e) {
@@ -55,7 +57,7 @@ export async function createParent(_prev: ActionState, formData: FormData): Prom
 }
 
 export async function updateParent(parentId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const parsed = parse(parentSchema, formObject(formData));
   if (parsed.error) return parsed.error;
   const d = parsed.data;
@@ -73,6 +75,11 @@ export async function updateParent(parentId: string, _prev: ActionState, formDat
       // Changing the ID signs the family out everywhere.
       ...(before.parentCode !== d.parentCode ? [prisma.session.deleteMany({ where: { parentId } })] : []),
     ]);
+    await logActivity(
+      adminActor(admin),
+      "parent.update",
+      `Mengemas kini akaun ibu bapa ${d.name} (${d.parentCode})${before.parentCode !== d.parentCode ? `, ID ditukar daripada ${before.parentCode}` : ""}`,
+    );
   } catch (e) {
     return handleError(e, "ID Ibu Bapa ini sudah digunakan. Sila guna ID lain.");
   }
@@ -81,12 +88,17 @@ export async function updateParent(parentId: string, _prev: ActionState, formDat
 }
 
 export async function setParentActive(parentId: string, active: boolean): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   try {
-    await prisma.$transaction([
-      prisma.parent.update({ where: { id: parentId }, data: { isActive: active } }),
+    const [p] = await prisma.$transaction([
+      prisma.parent.update({ where: { id: parentId }, data: { isActive: active }, select: { name: true, parentCode: true } }),
       ...(active ? [] : [prisma.session.deleteMany({ where: { parentId } })]),
     ]);
+    await logActivity(
+      adminActor(admin),
+      active ? "parent.activate" : "parent.deactivate",
+      `${active ? "Mengaktifkan semula" : "Menyahaktifkan"} akaun ibu bapa ${p.name} (${p.parentCode})`,
+    );
   } catch (e) {
     return handleError(e);
   }
@@ -95,14 +107,15 @@ export async function setParentActive(parentId: string, active: boolean): Promis
 }
 
 export async function regenerateParentId(parentId: string): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   try {
-    const parent = await prisma.parent.findUniqueOrThrow({ where: { id: parentId }, select: { parentCode: true } });
+    const parent = await prisma.parent.findUniqueOrThrow({ where: { id: parentId }, select: { parentCode: true, name: true } });
     const parentCode = await regenerateParentCode(parent.parentCode);
     await prisma.$transaction([
       prisma.parent.update({ where: { id: parentId }, data: { parentCode } }),
       prisma.session.deleteMany({ where: { parentId } }),
     ]);
+    await logActivity(adminActor(admin), "parent.regenerate", `Menjana ID baharu untuk ${parent.name}: ${parent.parentCode} → ${parentCode}`);
     revalidatePath("/", "layout");
     return ok(`ID baharu: ${parentCode}. ID lama tidak lagi boleh digunakan.`);
   } catch (e) {
@@ -115,14 +128,19 @@ const pinSchema = z.object({
 });
 
 export async function setParentPin(parentId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const parsed = parse(pinSchema, formObject(formData));
   if (parsed.error) return parsed.error;
   try {
-    await prisma.$transaction([
-      prisma.parent.update({ where: { id: parentId }, data: { pinHash: await hashSecret(parsed.data.pin) } }),
+    const [p] = await prisma.$transaction([
+      prisma.parent.update({
+        where: { id: parentId },
+        data: { pinHash: await hashSecret(parsed.data.pin) },
+        select: { name: true, parentCode: true },
+      }),
       prisma.session.deleteMany({ where: { parentId } }),
     ]);
+    await logActivity(adminActor(admin), "parent.pin", `Menetapkan PIN untuk ${p.name} (${p.parentCode})`);
   } catch (e) {
     return handleError(e);
   }
@@ -131,9 +149,10 @@ export async function setParentPin(parentId: string, _prev: ActionState, formDat
 }
 
 export async function removeParentPin(parentId: string): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   try {
-    await prisma.parent.update({ where: { id: parentId }, data: { pinHash: null } });
+    const p = await prisma.parent.update({ where: { id: parentId }, data: { pinHash: null }, select: { name: true, parentCode: true } });
+    await logActivity(adminActor(admin), "parent.pin", `Membuang PIN untuk ${p.name} (${p.parentCode})`);
   } catch (e) {
     return handleError(e);
   }
@@ -142,9 +161,10 @@ export async function removeParentPin(parentId: string): Promise<ActionState> {
 }
 
 export async function deleteParent(parentId: string): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   try {
-    await prisma.parent.delete({ where: { id: parentId } });
+    const p = await prisma.parent.delete({ where: { id: parentId }, select: { name: true, parentCode: true } });
+    await logActivity(adminActor(admin), "parent.delete", `Memadam akaun ibu bapa ${p.name} (${p.parentCode})`);
   } catch (e) {
     return handleError(e);
   }
