@@ -14,10 +14,10 @@ export function LoginPanel({ initialTab }: { initialTab: "admin" | "parent" }) {
     <div className="mt-7">
       <div role="tablist" className="grid grid-cols-2 gap-1 rounded-2xl border border-line bg-beige-50 p-1">
         <TabButton active={tab === "parent"} onClick={() => setTab("parent")} icon={<Users className="size-4" />}>
-          Log Masuk Ibu Bapa
+          <span className="hidden min-[360px]:inline">Log Masuk </span>Ibu Bapa
         </TabButton>
         <TabButton active={tab === "admin"} onClick={() => setTab("admin")} icon={<ShieldCheck className="size-4" />}>
-          Log Masuk Admin
+          <span className="hidden min-[360px]:inline">Log Masuk </span>Admin
         </TabButton>
       </div>
       <div className="mt-6 rounded-[var(--radius-card)] border border-line bg-surface p-6 shadow-[var(--shadow-soft)]">
@@ -45,7 +45,7 @@ function TabButton({
       aria-selected={active}
       onClick={onClick}
       className={cn(
-        "flex items-center justify-center gap-2 rounded-xl px-2 py-2.5 text-[13px] font-medium transition-colors sm:text-sm",
+        "flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-2 py-2.5 text-[13px] font-medium transition-colors sm:text-sm",
         active ? "bg-surface text-ink shadow-sm" : "text-muted hover:text-ink",
       )}
     >
