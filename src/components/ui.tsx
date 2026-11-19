@@ -227,7 +227,8 @@ export const td = "border-b border-line px-4 py-3 align-middle text-ink";
 // ───────── Form controls (plain, server-safe) ─────────
 
 export const inputClass =
-  "block w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-sm text-ink placeholder:text-muted/70 transition-colors hover:border-beige-300 focus:border-sage-400 focus:outline-none focus:ring-4 focus:ring-sage-100 disabled:bg-beige-50 disabled:text-muted";
+  // 16px text on phones: iOS Safari zooms the page in when a field with smaller text is tapped.
+  "block w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-base sm:text-sm text-ink placeholder:text-muted/70 transition-colors hover:border-beige-300 focus:border-sage-400 focus:outline-none focus:ring-4 focus:ring-sage-100 disabled:bg-beige-50 disabled:text-muted";
 
 export function Input(props: ComponentProps<"input">) {
   return <input {...props} className={cn(inputClass, props.className)} />;

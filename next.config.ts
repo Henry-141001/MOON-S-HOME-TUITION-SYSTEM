@@ -14,6 +14,12 @@ const nextConfig: NextConfig = {
   cacheComponents: false,
   serverExternalPackages: ["@react-pdf/renderer"],
   experimental: {
+    // Revisiting a page within 30s is instant (served from the browser's router cache).
+    // Saving anything clears this cache for the person who saved, so they always see their change.
+    staleTimes: {
+      dynamic: 30,
+      static: 300,
+    },
     serverActions: {
       bodySizeLimit: "2mb", // student photo uploads (resized in the browser first)
     },

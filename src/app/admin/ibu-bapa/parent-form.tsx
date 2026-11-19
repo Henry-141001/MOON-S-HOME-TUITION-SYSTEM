@@ -68,7 +68,7 @@ export function ParentForm({
                     </span>
                   </span>
                 </label>
-                <Select name={`rel_${s.id}`} defaultValue={linked.get(s.id) ?? ""} className="w-28 py-1.5 text-xs" aria-label="Hubungan">
+                <Select name={`rel_${s.id}`} defaultValue={linked.get(s.id) ?? ""} className="w-28 py-1.5 sm:text-xs" aria-label="Hubungan">
                   <option value="">Hubungan</option>
                   {RELATIONSHIP_OPTIONS.map((r) => (
                     <option key={r} value={r}>
