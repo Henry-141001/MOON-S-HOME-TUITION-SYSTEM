@@ -1,10 +1,9 @@
-import Link from "next/link";
 import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 import { formatDate, todayISO } from "@/lib/dates";
 import { average, percent } from "@/lib/analytics";
-import { Card, DemoBadge, EmptyState, PageHeader, PercentPill, Select, Table, buttonClass, cn, td, th } from "@/components/ui";
+import { ButtonLink, Card, DemoBadge, EmptyState, PageHeader, PercentPill, Select, Table, buttonClass, cn, td, th } from "@/components/ui";
 import { Modal } from "@/components/forms";
 import { createTuitionExam } from "@/app/admin/_actions/tuition";
 import { ExamForm } from "./exam-form";
@@ -94,9 +93,9 @@ export default async function TuitionExamsPage({ searchParams }: PageProps<"/adm
                     <PercentPill value={average(e.results.map((r) => percent(r.marksObtained, e.totalMarks)))} />
                   </td>
                   <td className={cn(td, "text-right")}>
-                    <Link href={`/admin/markah-tuisyen/${e.id}`} className="text-sm font-medium text-sage-700 hover:underline">
-                      Markah →
-                    </Link>
+                    <ButtonLink href={`/admin/markah-tuisyen/${e.id}`} variant="soft" size="sm" arrow>
+                      Markah
+                    </ButtonLink>
                   </td>
                 </tr>
               ))}

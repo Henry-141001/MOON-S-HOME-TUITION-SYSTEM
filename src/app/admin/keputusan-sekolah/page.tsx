@@ -1,11 +1,10 @@
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { average, percent } from "@/lib/analytics";
 import { SUBMISSION_LABELS, SUBMISSION_STATUSES } from "@/lib/constants";
 import { schoolExamTitle } from "@/lib/records";
-import { Badge, Card, EmptyState, PageHeader, PercentPill, Select, Table, TabLinks, buttonClass, cn, submissionTone, td, th } from "@/components/ui";
+import { Badge, ButtonLink, Card, EmptyState, PageHeader, PercentPill, Select, Table, TabLinks, buttonClass, cn, submissionTone, td, th } from "@/components/ui";
 import type { SubmissionStatus } from "@/generated/prisma/enums";
 
 export const metadata = { title: "Keputusan Ujian Sekolah" };
@@ -107,9 +106,9 @@ export default async function SchoolResultsPage({ searchParams }: PageProps<"/ad
                     <Badge tone={submissionTone[e.status]}>{SUBMISSION_LABELS[e.status]}</Badge>
                   </td>
                   <td className={cn(td, "text-right")}>
-                    <Link href={`/admin/keputusan-sekolah/${e.id}`} className="text-sm font-medium text-sage-700 hover:underline">
-                      Semak →
-                    </Link>
+                    <ButtonLink href={`/admin/keputusan-sekolah/${e.id}`} variant="soft" size="sm" arrow>
+                      Semak
+                    </ButtonLink>
                   </td>
                 </tr>
               ))}

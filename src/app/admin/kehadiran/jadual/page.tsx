@@ -3,7 +3,7 @@ import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 import { formatLongDate, parseISODate, todayISO, toISODate } from "@/lib/dates";
-import { Card, CardHeader, EmptyState, Input, Select, Table, Textarea, cn, td, th } from "@/components/ui";
+import { Card, CardHeader, EmptyState, Input, Select, Table, Textarea, buttonClass, cn, td, th } from "@/components/ui";
 import { ActionForm, ConfirmButton, Field, InlineAction, Modal, SubmitButton } from "@/components/forms";
 import { createTuitionSession, deleteTuitionSession, updateTuitionSession } from "@/app/admin/_actions/attendance";
 import type { ActionState } from "@/lib/action-state";
@@ -107,10 +107,7 @@ function SessionTable({
             <td className={cn(td, "text-xs text-ink-soft")}>{s.notes || "—"}</td>
             <td className={td}>
               <div className="flex justify-end gap-1.5">
-                <Link
-                  href={`/admin/kehadiran?tarikh=${toISODate(s.date)}`}
-                  className="inline-flex h-8 items-center px-2 text-[13px] font-medium text-sage-700 hover:underline"
-                >
+                <Link href={`/admin/kehadiran?tarikh=${toISODate(s.date)}`} className={buttonClass("soft", "sm")}>
                   Kehadiran
                 </Link>
                 <Modal trigger="Edit" triggerVariant="ghost" triggerSize="sm" title="Kemas Kini Sesi">

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 import { formatDate, todayISO, toISODate } from "@/lib/dates";
 import { COMMENT_LABELS } from "@/lib/constants";
-import { Badge, Card, CardBody, CardHeader, EmptyState, PageHeader, cn } from "@/components/ui";
+import { Badge, ButtonLink, Card, CardBody, CardHeader, EmptyState, PageHeader, RowChevron, cn } from "@/components/ui";
 import { ConfirmButton, InlineAction, Modal } from "@/components/forms";
 import { CommentsList, StudentAvatar } from "@/components/records";
 import { createComment, deleteComment, setCommentPublished, updateComment } from "@/app/admin/_actions/comments";
@@ -57,14 +57,20 @@ export default async function CommentsPage({ searchParams }: PageProps<"/admin/u
               <li key={s.id}>
                 <Link
                   href={`/admin/ulasan?murid=${s.id}`}
-                  className={cn("flex items-center gap-3 px-4 py-2.5 hover:bg-beige-50", s.id === selected?.id && "bg-sage-50")}
+                  aria-current={s.id === selected?.id ? "true" : undefined}
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-2.5 hover:bg-beige-50 active:bg-beige-100",
+                    s.id === selected?.id && "bg-sage-50 shadow-[inset_3px_0_0_var(--color-sage-600)]",
+                  )}
                 >
                   <StudentAvatar studentId={s.id} name={s.fullName} photoVersion={s.photo?.updatedAt} size={32} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium text-ink">{s.fullName}</span>
-                    <span className="text-xs text-muted">{s.studentCode}</span>
+                    <span className="text-xs text-muted">
+                      {s.studentCode} · {s._count.comments} ulasan
+                    </span>
                   </span>
-                  <span className="text-xs text-muted">{s._count.comments}</span>
+                  <RowChevron />
                 </Link>
               </li>
             ))}
@@ -78,9 +84,9 @@ export default async function CommentsPage({ searchParams }: PageProps<"/admin/u
                 title={`Ulasan Baharu untuk ${selected.fullName}`}
                 icon={<MessageSquarePlus className="size-4" />}
                 actions={
-                  <Link href={`/admin/murid/${selected.id}`} className="text-sm text-sage-700 hover:underline">
-                    Profil murid →
-                  </Link>
+                  <ButtonLink href={`/admin/murid/${selected.id}`} variant="ghost" size="sm" arrow>
+                    Profil murid
+                  </ButtonLink>
                 }
               />
               <CardBody>
@@ -133,18 +139,24 @@ export default async function CommentsPage({ searchParams }: PageProps<"/admin/u
             ) : (
               <ul className="divide-y divide-line">
                 {recent.map((c) => (
-                  <li key={c.id} className="px-5 py-3.5">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <Link href={`/admin/ulasan?murid=${c.student.id}`} className="text-sm font-medium text-ink hover:underline">
-                        {c.student.fullName}
-                      </Link>
-                      <span className="flex items-center gap-2 text-xs text-muted">
-                        {!c.isPublished && <Badge tone="neutral">Draf</Badge>}
-                        {formatDate(c.commentDate)}
-                      </span>
-                    </div>
-                    <p className="mt-0.5 text-xs font-medium text-sage-700">{COMMENT_LABELS[c.category]}</p>
-                    <p className="mt-1 line-clamp-2 text-sm text-ink-soft">{c.content}</p>
+                  <li key={c.id}>
+                    <Link
+                      href={`/admin/ulasan?murid=${c.student.id}`}
+                      className="flex items-center gap-3 px-5 py-3.5 hover:bg-beige-50 active:bg-beige-100"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <p className="text-sm font-medium text-ink">{c.student.fullName}</p>
+                          <span className="flex items-center gap-2 text-xs text-muted">
+                            {!c.isPublished && <Badge tone="neutral">Draf</Badge>}
+                            {formatDate(c.commentDate)}
+                          </span>
+                        </div>
+                        <p className="mt-0.5 text-xs font-medium text-sage-700">{COMMENT_LABELS[c.category]}</p>
+                        <p className="mt-1 line-clamp-2 text-sm text-ink-soft">{c.content}</p>
+                      </div>
+                      <RowChevron />
+                    </Link>
                   </li>
                 ))}
               </ul>

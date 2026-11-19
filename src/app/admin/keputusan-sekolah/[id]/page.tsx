@@ -6,7 +6,19 @@ import { requireAdmin } from "@/lib/session";
 import { formatDate, formatDateTime, todayISO } from "@/lib/dates";
 import { getStudentRecords } from "@/lib/records";
 import { SUBMISSION_LABELS } from "@/lib/constants";
-import { Badge, ButtonLink, Card, CardBody, CardHeader, PageHeader, PercentPill, Textarea, submissionTone } from "@/components/ui";
+import {
+  Badge,
+  ButtonLink,
+  Card,
+  CardBody,
+  CardHeader,
+  PageHeader,
+  PercentPill,
+  RowChevron,
+  Textarea,
+  linkClass,
+  submissionTone,
+} from "@/components/ui";
 import { ActionForm, ConfirmButton, Field, InlineAction, Modal, SubmitButton } from "@/components/forms";
 import { SchoolExamCard } from "@/components/records";
 import { SchoolExamForm } from "@/components/school-exam-form";
@@ -46,7 +58,7 @@ export default async function SchoolExamReviewPage({ params }: PageProps<"/admin
         title="Semakan Keputusan Sekolah"
         description={
           <>
-            <Link href={`/admin/murid/${exam.student.id}?tab=akademik`} className="font-medium text-ink hover:underline">
+            <Link href={`/admin/murid/${exam.student.id}?tab=akademik`} className={linkClass}>
               {exam.student.fullName}
             </Link>{" "}
             · {exam.student.studentCode} · {exam.student.yearForm} · {exam.student.school}
@@ -99,14 +111,20 @@ export default async function SchoolExamReviewPage({ params }: PageProps<"/admin
               <ul className="divide-y divide-line">
                 {others.map((e) => (
                   <li key={e.id}>
-                    <Link href={`/admin/keputusan-sekolah/${e.id}`} className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-beige-50">
-                      <span>
+                    <Link
+                      href={`/admin/keputusan-sekolah/${e.id}`}
+                      className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-beige-50 active:bg-beige-100"
+                    >
+                      <span className="min-w-0">
                         <span className="block text-sm font-medium text-ink">{e.title}</span>
                         <span className="text-xs text-muted">{formatDate(e.date)}</span>
                       </span>
-                      <span className="flex items-center gap-2">
+                      <span className="flex shrink-0 items-center gap-2">
                         <PercentPill value={e.overall} />
-                        <Badge tone={submissionTone[e.status]}>{SUBMISSION_LABELS[e.status]}</Badge>
+                        <span className="hidden sm:inline-flex">
+                          <Badge tone={submissionTone[e.status]}>{SUBMISSION_LABELS[e.status]}</Badge>
+                        </span>
+                        <RowChevron />
                       </span>
                     </Link>
                   </li>

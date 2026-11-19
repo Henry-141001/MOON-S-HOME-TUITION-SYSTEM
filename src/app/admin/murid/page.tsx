@@ -3,7 +3,7 @@ import { Plus, Search } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 import { formatDate } from "@/lib/dates";
-import { Badge, ButtonLink, Card, DemoBadge, EmptyState, Input, PageHeader, Select, Table, buttonClass, cn, td, th } from "@/components/ui";
+import { Badge, ButtonLink, Card, DemoBadge, EmptyState, Input, PageHeader, Select, Table, buttonClass, cn, linkClass, td, th } from "@/components/ui";
 import { StudentAvatar } from "@/components/records";
 
 export const metadata = { title: "Maklumat Murid" };
@@ -97,7 +97,7 @@ export default async function StudentsPage({ searchParams }: PageProps<"/admin/m
                     <Link href={`/admin/murid/${s.id}`} className="flex items-center gap-3">
                       <StudentAvatar studentId={s.id} name={s.fullName} photoVersion={s.photo?.updatedAt} size={38} />
                       <span className="min-w-0">
-                        <span className="block truncate font-medium text-ink hover:underline">{s.fullName}</span>
+                        <span className={cn("block truncate", linkClass)}>{s.fullName}</span>
                         <span className="flex items-center gap-1.5 text-xs text-muted">
                           {s.studentCode} {s.isDemo && <DemoBadge />}
                         </span>

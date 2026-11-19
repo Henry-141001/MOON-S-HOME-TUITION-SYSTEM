@@ -4,7 +4,7 @@ import { requireAdmin } from "@/lib/session";
 import { formatMonth, monthBounds, parseISODate, toISODate } from "@/lib/dates";
 import { attendanceCounts, monthlyAttendance } from "@/lib/analytics";
 import { AttendanceChart } from "@/components/charts";
-import { Card, CardBody, CardHeader, EmptyState, Input, PercentPill, Table, buttonClass, cn, td, th } from "@/components/ui";
+import { Card, CardBody, CardHeader, EmptyState, Input, PercentPill, Table, buttonClass, cn, linkClass, td, th } from "@/components/ui";
 
 export const metadata = { title: "Statistik Kehadiran" };
 
@@ -69,7 +69,7 @@ export default async function AttendanceStatsPage({ searchParams }: PageProps<"/
                   <tr key={s.id}>
                     <td className={cn(td, "font-mono text-xs")}>{s.studentCode}</td>
                     <td className={td}>
-                      <Link href={`/admin/murid/${s.id}?tab=kehadiran`} className="font-medium hover:underline">
+                      <Link href={`/admin/murid/${s.id}?tab=kehadiran`} className={linkClass}>
                         {s.fullName}
                       </Link>
                     </td>
@@ -121,7 +121,7 @@ export default async function AttendanceStatsPage({ searchParams }: PageProps<"/
                   {months.map((m) => (
                     <tr key={m.month}>
                       <td className={td}>
-                        <Link href={`/admin/kehadiran/statistik?bulan=${m.month}`} className="font-medium hover:underline">
+                        <Link href={`/admin/kehadiran/statistik?bulan=${m.month}`} className={linkClass}>
                           {formatMonth(m.month)}
                         </Link>
                       </td>

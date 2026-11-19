@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarCheck, CalendarClock, CalendarX, ClipboardCheck, GraduationCap, Percent } from "lucide-react";
+import { CalendarCheck, CalendarClock, CalendarX, ChevronRight, ClipboardCheck, GraduationCap, Percent } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 import { todayISO, parseISODate, toISODate, formatDate, formatLongDate, formatShortDate } from "@/lib/dates";
@@ -15,7 +15,10 @@ import {
   EmptyState,
   PageHeader,
   PercentPill,
+  RowChevron,
   StatCard,
+  buttonClass,
+  linkClass,
   submissionTone,
 } from "@/components/ui";
 import { AttendanceChart, PercentBarChart } from "@/components/charts";
@@ -130,7 +133,7 @@ export default async function AdminDashboard() {
           label="Jumlah Murid Aktif"
           value={studentCount}
           icon={<GraduationCap className="size-5" />}
-          hint={<Link href="/admin/murid" className="underline-offset-2 hover:underline">Lihat semua murid</Link>}
+          hint={<Link href="/admin/murid" className={linkClass}>Lihat semua murid</Link>}
         />
         <StatCard
           label="Hadir Hari Ini"
@@ -164,7 +167,9 @@ export default async function AdminDashboard() {
           <span className="flex-1">
             <strong>{pendingCount}</strong> keputusan peperiksaan sekolah daripada ibu bapa sedang menunggu semakan anda.
           </span>
-          <span className="font-medium">Semak →</span>
+          <span className={buttonClass("secondary", "sm", "shrink-0 border-amber-ink/30 text-amber-ink")}>
+            Semak <ChevronRight className="-mr-1 size-4" />
+          </span>
         </Link>
       )}
 
@@ -187,28 +192,32 @@ export default async function AdminDashboard() {
         <Card className="xl:col-span-2">
           <CardHeader
             title="Keputusan Ujian Tuisyen Terkini"
-            actions={<ButtonLink href="/admin/markah-tuisyen" variant="ghost" size="sm">Lihat semua</ButtonLink>}
+            actions={<ButtonLink href="/admin/markah-tuisyen" variant="ghost" size="sm" arrow>Lihat semua</ButtonLink>}
           />
           {tuitionRecent.length === 0 ? (
             <EmptyState title="Belum ada markah ujian tuisyen" />
           ) : (
             <ul className="divide-y divide-line">
               {tuitionRecent.map((r) => (
-                <li key={r.id} className="flex items-center justify-between gap-3 px-5 py-3">
-                  <div className="min-w-0">
-                    <Link href={`/admin/murid/${r.student.id}`} className="truncate text-sm font-medium text-ink hover:underline">
-                      {r.student.fullName}
-                    </Link>
-                    <p className="truncate text-xs text-muted">
-                      {r.exam.subject.name} · {r.exam.name} · {formatDate(r.exam.date)}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-ink-soft">
-                      {r.marksObtained}/{r.exam.totalMarks}
-                    </span>
-                    <PercentPill value={percent(r.marksObtained, r.exam.totalMarks)} />
-                  </div>
+                <li key={r.id}>
+                  <Link
+                    href={`/admin/markah-tuisyen/${r.exam.id}`}
+                    className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-beige-50 active:bg-beige-100"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-ink">{r.student.fullName}</p>
+                      <p className="truncate text-xs text-muted">
+                        {r.exam.subject.name} · {r.exam.name} · {formatDate(r.exam.date)}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2 text-sm">
+                      <span className="hidden text-ink-soft sm:inline">
+                        {r.marksObtained}/{r.exam.totalMarks}
+                      </span>
+                      <PercentPill value={percent(r.marksObtained, r.exam.totalMarks)} />
+                      <RowChevron />
+                    </div>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -219,7 +228,7 @@ export default async function AdminDashboard() {
           <CardHeader
             title="Sesi Tuisyen Akan Datang"
             icon={<CalendarClock className="size-4" />}
-            actions={<ButtonLink href="/admin/kehadiran/jadual" variant="ghost" size="sm">Urus</ButtonLink>}
+            actions={<ButtonLink href="/admin/kehadiran/jadual" variant="ghost" size="sm" arrow>Urus</ButtonLink>}
           />
           {upcoming.length === 0 ? (
             <EmptyState
@@ -252,7 +261,7 @@ export default async function AdminDashboard() {
         <Card>
           <CardHeader
             title="Keputusan Sekolah Dihantar Ibu Bapa"
-            actions={<ButtonLink href="/admin/keputusan-sekolah" variant="ghost" size="sm">Lihat semua</ButtonLink>}
+            actions={<ButtonLink href="/admin/keputusan-sekolah" variant="ghost" size="sm" arrow>Lihat semua</ButtonLink>}
           />
           {submissions.length === 0 ? (
             <EmptyState title="Belum ada keputusan dihantar" />
@@ -260,16 +269,26 @@ export default async function AdminDashboard() {
             <ul className="divide-y divide-line">
               {submissions.map((s) => (
                 <li key={s.id}>
-                  <Link href={`/admin/keputusan-sekolah/${s.id}`} className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-beige-50">
+                  <Link
+                    href={`/admin/keputusan-sekolah/${s.id}`}
+                    className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-beige-50 active:bg-beige-100"
+                  >
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-ink">{s.student.fullName}</p>
                       <p className="truncate text-xs text-muted">
                         {schoolExamTitle(s.examType, s.examName)} · {formatDate(s.examDate)}
                       </p>
+                      <div className="mt-1.5 flex items-center gap-2 sm:hidden">
+                        <PercentPill value={average(s.results.map((r) => percent(r.marksObtained, r.totalMarks)))} />
+                        <Badge tone={submissionTone[s.status]}>{SUBMISSION_LABELS[s.status]}</Badge>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <PercentPill value={average(s.results.map((r) => percent(r.marksObtained, r.totalMarks)))} />
-                      <Badge tone={submissionTone[s.status]}>{SUBMISSION_LABELS[s.status]}</Badge>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <span className="hidden items-center gap-2 sm:flex">
+                        <PercentPill value={average(s.results.map((r) => percent(r.marksObtained, r.totalMarks)))} />
+                        <Badge tone={submissionTone[s.status]}>{SUBMISSION_LABELS[s.status]}</Badge>
+                      </span>
+                      <RowChevron />
                     </div>
                   </Link>
                 </li>
@@ -281,22 +300,28 @@ export default async function AdminDashboard() {
         <Card>
           <CardHeader
             title="Ulasan Guru Terkini"
-            actions={<ButtonLink href="/admin/ulasan" variant="ghost" size="sm">Tulis ulasan</ButtonLink>}
+            actions={<ButtonLink href="/admin/ulasan" variant="ghost" size="sm" arrow>Tulis ulasan</ButtonLink>}
           />
           {comments.length === 0 ? (
             <EmptyState title="Belum ada ulasan" />
           ) : (
             <ul className="divide-y divide-line">
               {comments.map((c) => (
-                <li key={c.id} className="px-5 py-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <Link href={`/admin/ulasan?murid=${c.student.id}`} className="text-sm font-medium text-ink hover:underline">
-                      {c.student.fullName}
-                    </Link>
-                    <span className="text-xs text-muted">{formatDate(c.commentDate)}</span>
-                  </div>
-                  <p className="mt-0.5 text-xs font-medium text-sage-700">{COMMENT_LABELS[c.category]}</p>
-                  <p className="mt-1 line-clamp-2 text-sm text-ink-soft">{c.content}</p>
+                <li key={c.id}>
+                  <Link
+                    href={`/admin/ulasan?murid=${c.student.id}`}
+                    className="flex items-center gap-3 px-5 py-3 hover:bg-beige-50 active:bg-beige-100"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="truncate text-sm font-medium text-ink">{c.student.fullName}</p>
+                        <span className="shrink-0 text-xs text-muted">{formatDate(c.commentDate)}</span>
+                      </div>
+                      <p className="mt-0.5 text-xs font-medium text-sage-700">{COMMENT_LABELS[c.category]}</p>
+                      <p className="mt-1 line-clamp-2 text-sm text-ink-soft">{c.content}</p>
+                    </div>
+                    <RowChevron />
+                  </Link>
                 </li>
               ))}
             </ul>

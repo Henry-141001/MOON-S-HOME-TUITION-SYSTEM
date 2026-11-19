@@ -80,7 +80,7 @@ export default async function ParentHome({ searchParams }: PageProps<"/ibu-bapa"
         <Card>
           <CardHeader
             title="Keputusan Ujian Tuisyen Terkini"
-            actions={<ButtonLink href={withChild("/ibu-bapa/tuisyen", child.id)} variant="ghost" size="sm">Lihat semua</ButtonLink>}
+            actions={<ButtonLink href={withChild("/ibu-bapa/tuisyen", child.id)} variant="ghost" size="sm" arrow>Lihat semua</ButtonLink>}
           />
           {r.tuition.length === 0 ? (
             <EmptyState title="Belum ada markah ujian tuisyen" />
@@ -109,7 +109,7 @@ export default async function ParentHome({ searchParams }: PageProps<"/ibu-bapa"
         <Card>
           <CardHeader
             title="Keputusan Peperiksaan Sekolah Terkini"
-            actions={<ButtonLink href={withChild("/ibu-bapa/sekolah", child.id)} variant="ghost" size="sm">Lihat semua</ButtonLink>}
+            actions={<ButtonLink href={withChild("/ibu-bapa/sekolah", child.id)} variant="ghost" size="sm" arrow>Lihat semua</ButtonLink>}
           />
           {!latestSchool ? (
             <EmptyState
@@ -152,7 +152,7 @@ export default async function ParentHome({ searchParams }: PageProps<"/ibu-bapa"
       <Card className="mt-6">
         <CardHeader
           title="Maklum Balas Guru Terkini"
-          actions={<ButtonLink href={withChild("/ibu-bapa/ulasan", child.id)} variant="ghost" size="sm">Semua ulasan</ButtonLink>}
+          actions={<ButtonLink href={withChild("/ibu-bapa/ulasan", child.id)} variant="ghost" size="sm" arrow>Semua ulasan</ButtonLink>}
         />
         <CardBody>
           <LatestCommentsByCategory comments={r.comments} categories={["ACADEMIC", "STRENGTHS", "IMPROVEMENT", "RECOMMENDATIONS"]} />

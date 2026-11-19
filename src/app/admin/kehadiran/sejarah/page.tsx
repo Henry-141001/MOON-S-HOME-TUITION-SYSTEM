@@ -70,7 +70,7 @@ export default async function AttendanceHistoryPage({ searchParams }: PageProps<
                   </td>
                   <td className={cn(td, "max-w-64 text-xs text-ink-soft")}>{missing.length ? missing.join(", ") : "—"}</td>
                   <td className={cn(td, "text-right")}>
-                    <Link href={`/admin/kehadiran?tarikh=${date}`} className="text-sm font-medium text-sage-700 hover:underline">
+                    <Link href={`/admin/kehadiran?tarikh=${date}`} className={buttonClass("ghost", "sm")}>
                       Edit
                     </Link>
                   </td>

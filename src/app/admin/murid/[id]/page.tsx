@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { FileText, Pencil, Power, Trash2 } from "lucide-react";
+import { CalendarCheck, FileText, Pencil, Plus, Power, Trash2 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 import { formatDate, toISODate } from "@/lib/dates";
@@ -14,6 +14,7 @@ import {
   DemoBadge,
   EmptyState,
   PageHeader,
+  RowChevron,
   TabLinks,
 } from "@/components/ui";
 import { ConfirmButton, InlineAction, Modal } from "@/components/forms";
@@ -158,7 +159,7 @@ export default async function StudentProfilePage({ params, searchParams }: PageP
             <Card>
               <CardHeader
                 title="Akaun Ibu Bapa"
-                actions={<ButtonLink href="/admin/ibu-bapa" variant="ghost" size="sm">Urus</ButtonLink>}
+                actions={<ButtonLink href="/admin/ibu-bapa" variant="ghost" size="sm" arrow>Urus</ButtonLink>}
               />
               {student.parents.length === 0 ? (
                 <EmptyState
@@ -168,12 +169,20 @@ export default async function StudentProfilePage({ params, searchParams }: PageP
               ) : (
                 <ul className="divide-y divide-line">
                   {student.parents.map(({ parent, relationship }) => (
-                    <li key={parent.id} className="px-5 py-3">
-                      <p className="text-sm font-medium text-ink">{parent.name}</p>
-                      <p className="mt-0.5 font-mono text-xs text-ink-soft">{parent.parentCode}</p>
-                      <p className="mt-0.5 text-xs text-muted">
-                        {[relationship, parent.phone, parent.isActive ? null : "Akaun tidak aktif"].filter(Boolean).join(" · ") || "—"}
-                      </p>
+                    <li key={parent.id}>
+                      <Link
+                        href={`/admin/ibu-bapa/${parent.id}`}
+                        className="flex items-center gap-3 px-5 py-3 hover:bg-beige-50 active:bg-beige-100"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-ink">{parent.name}</p>
+                          <p className="mt-0.5 font-mono text-xs text-ink-soft">{parent.parentCode}</p>
+                          <p className="mt-0.5 text-xs text-muted">
+                            {[relationship, parent.phone, parent.isActive ? null : "Akaun tidak aktif"].filter(Boolean).join(" · ") || "—"}
+                          </p>
+                        </div>
+                        <RowChevron />
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -218,7 +227,11 @@ export default async function StudentProfilePage({ params, searchParams }: PageP
           <Card>
             <CardHeader
               title={`${records.tuition.length} keputusan`}
-              actions={<ButtonLink href="/admin/markah-tuisyen" variant="ghost" size="sm">Masukkan markah</ButtonLink>}
+              actions={
+                <ButtonLink href="/admin/markah-tuisyen" variant="soft" size="sm">
+                  <Plus className="size-4" /> Masukkan Markah
+                </ButtonLink>
+              }
             />
             <TuitionResultsTable rows={records.tuition} />
           </Card>
@@ -235,7 +248,11 @@ export default async function StudentProfilePage({ params, searchParams }: PageP
                   key={e.id}
                   exam={e}
                   showSubmittedAt
-                  actions={<ButtonLink href={`/admin/keputusan-sekolah/${e.id}`} variant="soft" size="sm">Semak</ButtonLink>}
+                  actions={
+                    <ButtonLink href={`/admin/keputusan-sekolah/${e.id}`} variant="soft" size="sm" arrow>
+                      Semak
+                    </ButtonLink>
+                  }
                 />
               ))}
             </div>
@@ -254,7 +271,11 @@ export default async function StudentProfilePage({ params, searchParams }: PageP
             <Card>
               <CardHeader
                 title="Sejarah Kehadiran"
-                actions={<ButtonLink href="/admin/kehadiran" variant="ghost" size="sm">Ambil kehadiran</ButtonLink>}
+                actions={
+                  <ButtonLink href="/admin/kehadiran" variant="soft" size="sm">
+                    <CalendarCheck className="size-4" /> Ambil Kehadiran
+                  </ButtonLink>
+                }
               />
               <AttendanceHistoryTable rows={records.attendance} />
             </Card>
@@ -268,9 +289,9 @@ export default async function StudentProfilePage({ params, searchParams }: PageP
             title="Ulasan Guru"
             description="Termasuk draf yang belum diterbitkan."
             actions={
-              <Link href={`/admin/ulasan?murid=${student.id}`} className="text-sm font-medium text-sage-700 hover:underline">
-                Tulis / urus ulasan →
-              </Link>
+              <ButtonLink href={`/admin/ulasan?murid=${student.id}`} variant="soft" size="sm">
+                <Pencil className="size-4" /> Tulis / Urus Ulasan
+              </ButtonLink>
             }
           />
           <CardBody>

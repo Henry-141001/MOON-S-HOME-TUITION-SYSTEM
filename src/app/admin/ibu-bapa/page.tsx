@@ -2,7 +2,7 @@ import Link from "next/link";
 import { KeyRound, Plus, ShieldCheck } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
-import { Badge, Card, DemoBadge, EmptyState, PageHeader, Table, cn, td, th } from "@/components/ui";
+import { Badge, ButtonLink, Card, DemoBadge, EmptyState, PageHeader, Table, cn, linkClass, td, th } from "@/components/ui";
 import { Modal } from "@/components/forms";
 import { createParent } from "@/app/admin/_actions/parents";
 import { ParentForm } from "./parent-form";
@@ -89,7 +89,7 @@ export default async function ParentsPage() {
                       <ul className="space-y-0.5">
                         {p.children.map((c) => (
                           <li key={c.studentId} className="text-sm">
-                            <Link href={`/admin/murid/${c.student.id}`} className="hover:underline">
+                            <Link href={`/admin/murid/${c.student.id}`} className={linkClass}>
                               {c.student.fullName}
                             </Link>
                             {c.relationship && <span className="text-xs text-muted"> · {c.relationship}</span>}
@@ -109,9 +109,9 @@ export default async function ParentsPage() {
                   </td>
                   <td className={td}>{p.isActive ? <Badge tone="sage">Aktif</Badge> : <Badge tone="neutral">Tidak Aktif</Badge>}</td>
                   <td className={cn(td, "text-right")}>
-                    <Link href={`/admin/ibu-bapa/${p.id}`} className="text-sm font-medium text-sage-700 hover:underline">
-                      Urus →
-                    </Link>
+                    <ButtonLink href={`/admin/ibu-bapa/${p.id}`} variant="ghost" size="sm" arrow>
+                      Urus
+                    </ButtonLink>
                   </td>
                 </tr>
               ))}

@@ -1,5 +1,6 @@
 // Server-safe presentational building blocks.
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
 
 export function cn(...classes: (string | false | null | undefined)[]) {
@@ -11,28 +12,52 @@ export function cn(...classes: (string | false | null | undefined)[]) {
 type Variant = "primary" | "secondary" | "ghost" | "danger" | "soft";
 type Size = "sm" | "md" | "lg";
 
+/**
+ * Every variant has a visible shape (fill or border) so it reads as tappable on
+ * phones, where there is no hover. All variants also react when pressed.
+ */
 export function buttonClass(variant: Variant = "primary", size: Size = "md", extra?: string) {
   return cn(
-    "inline-flex items-center justify-center gap-2 rounded-full font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 whitespace-nowrap",
-    size === "sm" && "h-8 px-3 text-[13px]",
-    size === "md" && "h-10 px-4 text-sm",
+    "inline-flex select-none items-center justify-center gap-1.5 rounded-full font-medium whitespace-nowrap",
+    "transition-[background-color,border-color,color,transform] duration-150 active:scale-[0.97]",
+    "disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100",
+    // Phones get taller hit areas (min. 36–48px); desktop stays compact.
+    size === "sm" && "h-9 px-3.5 text-[13px] sm:h-8 sm:px-3",
+    size === "md" && "h-11 px-4 text-sm sm:h-10",
     size === "lg" && "h-12 px-6 text-base",
-    variant === "primary" && "bg-sage-600 text-white hover:bg-sage-700",
-    variant === "secondary" && "border border-line bg-surface text-ink hover:bg-beige-50",
-    variant === "soft" && "bg-sage-50 text-sage-700 hover:bg-sage-100",
-    variant === "ghost" && "text-ink-soft hover:bg-beige-100 hover:text-ink",
-    variant === "danger" && "border border-rose-soft bg-surface text-rose-ink hover:bg-rose-soft",
+    variant === "primary" && "bg-sage-600 text-white shadow-sm hover:bg-sage-700 active:bg-sage-800",
+    variant === "secondary" && "border border-beige-300 bg-surface text-ink shadow-sm hover:bg-beige-50 active:bg-beige-100",
+    variant === "soft" && "border border-sage-200 bg-sage-50 text-sage-700 hover:bg-sage-100 active:bg-sage-200",
+    // "ghost" = small secondary action: outlined sage pill (never plain text).
+    variant === "ghost" && "border border-sage-200 bg-surface text-sage-700 hover:bg-sage-50 active:bg-sage-100",
+    variant === "danger" && "border border-rose-ink/30 bg-surface text-rose-ink hover:bg-rose-soft active:bg-rose-soft",
     extra,
   );
 }
+
+/** Inline text link that is visibly a link without hover (underlined, sage). */
+export const linkClass =
+  "font-medium text-sage-700 underline decoration-sage-300 decoration-1 underline-offset-4 hover:text-sage-800 hover:decoration-sage-600 active:text-sage-800";
 
 export function ButtonLink({
   variant,
   size,
   className,
+  arrow = false,
+  children,
   ...props
-}: ComponentProps<typeof Link> & { variant?: Variant; size?: Size }) {
-  return <Link {...props} className={buttonClass(variant, size, className)} />;
+}: ComponentProps<typeof Link> & { variant?: Variant; size?: Size; arrow?: boolean }) {
+  return (
+    <Link {...props} className={buttonClass(variant, size, className)}>
+      {children}
+      {arrow && <ChevronRight className="-mr-1 size-4" aria-hidden="true" />}
+    </Link>
+  );
+}
+
+/** Chevron shown at the end of a tappable row. */
+export function RowChevron() {
+  return <ChevronRight className="size-4 shrink-0 text-sage-500" aria-hidden="true" />;
 }
 
 // ───────── Layout ─────────
@@ -146,19 +171,21 @@ export function EmptyState({ title, description, action }: { title: string; desc
 
 // ───────── Tabs (link based, so they survive refresh) ─────────
 
+/** Pill style shared by all tab bars: every tab looks tappable and they wrap on phones. */
+export function tabPillClass(active: boolean) {
+  return cn(
+    "inline-flex h-9 select-none items-center whitespace-nowrap rounded-full px-4 text-sm transition-[background-color,color,transform] duration-150 active:scale-[0.97]",
+    active
+      ? "bg-sage-600 font-medium text-white shadow-sm"
+      : "border border-beige-300 bg-surface text-ink-soft hover:bg-beige-50 active:bg-beige-100",
+  );
+}
+
 export function TabLinks({ items }: { items: { href: string; label: string; active: boolean }[] }) {
   return (
-    <nav className="no-print -mx-1 mb-6 flex gap-1 overflow-x-auto border-b border-line px-1" aria-label="Tab">
+    <nav className="no-print mb-6 flex flex-wrap gap-2" aria-label="Tab">
       {items.map((t) => (
-        <Link
-          key={t.href}
-          href={t.href}
-          aria-current={t.active ? "page" : undefined}
-          className={cn(
-            "-mb-px whitespace-nowrap border-b-2 px-3.5 py-2.5 text-sm transition-colors",
-            t.active ? "border-sage-600 font-medium text-sage-700" : "border-transparent text-muted hover:text-ink",
-          )}
-        >
+        <Link key={t.href} href={t.href} aria-current={t.active ? "page" : undefined} className={tabPillClass(t.active)}>
           {t.label}
         </Link>
       ))}
