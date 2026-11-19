@@ -1,0 +1,20 @@
+// Prisma schema for System Muna — https://pris.ly/d/prisma-schema
+// After changing models, run: npm run db:migrate
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Example model — rename or replace with System Muna's real tables.
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

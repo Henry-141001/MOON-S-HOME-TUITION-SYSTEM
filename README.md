@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# System Muna
 
-## Getting Started
+Next.js 16 (App Router, TypeScript, Tailwind) + Prisma 7 + Neon PostgreSQL, deployed on Vercel.
 
-First, run the development server:
+## Project layout
+
+| Path | Purpose |
+|---|---|
+| `prisma/schema.prisma` | Database tables (models). Edit this to add tables. |
+| `prisma.config.ts` | Prisma CLI config (uses `DIRECT_URL` for migrations). |
+| `src/lib/prisma.ts` | Shared database client — `import { prisma } from "@/lib/prisma"`. |
+| `src/app/api/health/route.ts` | `GET /api/health` — checks the database connection. |
+| `.env.example` | Template for environment variables. |
+
+## 1. Create the Neon database
+
+1. Go to [console.neon.tech](https://console.neon.tech) → **New Project** → name it `system-muna`
+   (a separate project from Rakan Siswa, so each has its own storage quota). Pick the region
+   closest to your users, e.g. **AWS Asia Pacific (Singapore)**.
+2. Click **Connect** and copy two connection strings:
+   - **Pooled** (hostname contains `-pooler`) → `DATABASE_URL`
+   - **Direct** (turn "Connection pooling" off) → `DIRECT_URL`
+
+## 2. Run locally
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env      # then paste your two Neon URLs into .env
+npm install
+npm run db:migrate        # creates tables in Neon (asks for a migration name, e.g. "init")
+npm run dev               # http://localhost:3000  and  http://localhost:3000/api/health
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`/api/health` should return `{"status":"ok","database":"connected"}`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Useful commands:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `npm run db:migrate` — after changing `schema.prisma`, create + apply a migration
+- `npm run db:studio` — browse/edit data in a web UI
 
-## Learn More
+## 3. Deploy to Vercel
 
-To learn more about Next.js, take a look at the following resources:
+1. Push this folder to a new GitHub repo.
+2. [vercel.com/new](https://vercel.com/new) → import the repo (Next.js is auto-detected).
+3. **Environment Variables** → add `DATABASE_URL` and `DIRECT_URL` (same values as `.env`).
+4. Deploy. The build runs `prisma generate && next build` automatically.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Migrations are **not** run during the Vercel build. Apply them from your PC with
+`npm run db:migrate` (development) — both point at the same Neon database.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 4. Custom domain (GitHub Student Pack)
 
-## Deploy on Vercel
+Use one domain for all projects with subdomains, e.g. `muna.yourname.me`:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Vercel project → **Settings → Domains** → add `muna.yourname.me`.
+2. In your registrar (e.g. Namecheap → Advanced DNS), add the **CNAME** record Vercel shows
+   (host `muna` → `cname.vercel-dns.com`). HTTPS is set up automatically.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Storage tips (Neon free tier ≈ 0.5 GB per project)
+
+- Don't store images/files in PostgreSQL — use Vercel Blob or Cloudinary and save only the URL.
+- Delete test data you no longer need.
