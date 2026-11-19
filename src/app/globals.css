@@ -1,26 +1,90 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Moon's Home Tuition — soft pastel palette: warm cream, muted sage, light beige. */
+@theme {
+  --color-cream: #faf7f1;
+  --color-surface: #ffffff;
+
+  --color-beige-50: #f7f2e9;
+  --color-beige-100: #efe7d8;
+  --color-beige-200: #e4d8c3;
+  --color-beige-300: #d3c3a6;
+
+  --color-sage-50: #f0f4ee;
+  --color-sage-100: #e0e9dd;
+  --color-sage-200: #c6d6c2;
+  --color-sage-300: #a8bfa4;
+  --color-sage-400: #8aa786;
+  --color-sage-500: #6f8f6c;
+  --color-sage-600: #5b7a59;
+  --color-sage-700: #4a6349;
+  --color-sage-800: #3a4e3a;
+
+  --color-ink: #2d3830;
+  --color-ink-soft: #536056;
+  --color-muted: #7c867d;
+  --color-line: #e9e2d5;
+
+  --color-rose-soft: #f6e4df;
+  --color-rose-ink: #a35a49;
+  --color-amber-soft: #f7ecd6;
+  --color-amber-ink: #94702c;
+  --color-sky-soft: #e3ecf2;
+  --color-sky-ink: #4b6a82;
+
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+
+  --radius-card: 1.25rem;
+  --shadow-soft: 0 1px 2px rgb(45 56 48 / 0.04), 0 4px 16px rgb(45 56 48 / 0.05);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+/* Consistent focus ring for keyboard users. */
+:focus-visible {
+  outline: 2px solid var(--color-sage-500);
+  outline-offset: 2px;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0.55;
+  cursor: pointer;
+}
+
+dialog::backdrop {
+  background: rgb(45 56 48 / 0.35);
+  backdrop-filter: blur(2px);
+}
+
+/* Print: only the report content. */
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+  body {
+    background: #fff;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-full {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  .print-break-avoid {
+    break-inside: avoid;
+  }
 }

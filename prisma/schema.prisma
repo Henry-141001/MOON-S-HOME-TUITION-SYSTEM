@@ -1,4 +1,5 @@
-// Prisma schema for System Muna — https://pris.ly/d/prisma-schema
+// Moon's Home Tuition System — database schema
+// Two roles only: ADMIN (the teacher) and PARENT.
 // After changing models, run: npm run db:migrate
 
 generator client {
@@ -10,11 +11,345 @@ datasource db {
   provider = "postgresql"
 }
 
-// Example model — rename or replace with System Muna's real tables.
-model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
+// ───────────────────────── Enums ─────────────────────────
+
+enum Role {
+  ADMIN
+  PARENT
+}
+
+enum AttendanceStatus {
+  PRESENT // Hadir
+  ABSENT // Tidak Hadir
+  EXCUSED // Bersebab
+}
+
+enum SchoolExamType {
+  MONTHLY_TEST // Ujian Bulanan
+  MID_YEAR // Peperiksaan Pertengahan Tahun
+  FINAL // Peperiksaan Akhir Tahun
+  UASA // UASA
+  OTHER // Lain-lain
+}
+
+enum SubmissionStatus {
+  PENDING // Menunggu Semakan
+  APPROVED // Diluluskan
+  NEEDS_CORRECTION // Perlu Pembetulan
+}
+
+enum CommentCategory {
+  ACADEMIC // Prestasi Akademik
+  STRENGTHS // Kekuatan
+  IMPROVEMENT // Ruang Penambahbaikan
+  PARTICIPATION // Penyertaan Dalam Kelas
+  HOMEWORK // Kerja Rumah
+  ATTITUDE // Sikap dan Disiplin
+  RECOMMENDATIONS // Cadangan untuk Ibu Bapa
+  GENERAL // Ulasan Umum
+}
+
+// ───────────────────────── Accounts ─────────────────────────
+
+/// The single admin/teacher account.
+model Admin {
+  id           String   @id @default(cuid())
+  loginId      String   @unique /// Admin ID used to log in (no email)
+  name         String
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sessions          Session[]
+  attendance        Attendance[]
+  tuitionExams      TuitionExamination[]
+  comments          TeacherComment[]
+  reviewedSchoolExs SchoolExamination[]
+
+  @@map("admin")
+}
+
+/// One row per family. Parents log in with parentCode only (optional PIN).
+model Parent {
+  id         String   @id @default(cuid())
+  parentCode String   @unique /// e.g. MHT001-K7QX — the Parent ID
+  name       String /// Parent / guardian name
+  phone      String?
+  notes      String?
+  pinHash    String? /// Optional PIN upgrade — when set, login also asks for the PIN
+  isActive   Boolean  @default(true)
+  isDemo     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  children    ParentStudent[]
+  sessions    Session[]
+  submissions SchoolExamination[]
+
+  @@map("parents")
+}
+
+// ───────────────────────── Students ─────────────────────────
+
+model Student {
+  id               String   @id @default(cuid())
+  studentCode      String   @unique /// e.g. STU001 — the Student ID
+  fullName         String
+  school           String
+  yearForm         String /// e.g. "Tahun 5", "Tingkatan 2"
+  guardianName     String
+  registrationDate DateTime @db.Date
+  isActive         Boolean  @default(true)
+  isDemo           Boolean  @default(false)
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  photo          StudentPhoto?
+  subjects       StudentSubject[]
+  parents        ParentStudent[]
+  attendance     Attendance[]
+  tuitionResults TuitionResult[]
+  comments       TeacherComment[]
+  schoolExams    SchoolExamination[]
+
+  @@map("students")
+}
+
+/// Photos are stored privately in the database (small, resized JPEGs)
+/// and served only to the admin or the student's own parent.
+model StudentPhoto {
+  studentId String   @id
+  data      Bytes
+  mimeType  String
   updatedAt DateTime @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@map("student_photos")
+}
+
+/// One Parent ID can be linked to many children (siblings).
+model ParentStudent {
+  parentId     String
+  studentId    String
+  relationship String? /// e.g. Ibu, Bapa, Penjaga
+  createdAt    DateTime @default(now())
+
+  parent  Parent  @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@id([parentId, studentId])
+  @@index([studentId])
+  @@map("parent_students")
+}
+
+// ───────────────────────── Subjects ─────────────────────────
+
+model Subject {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  students      StudentSubject[]
+  tuitionExams  TuitionExamination[]
+  schoolResults SchoolResult[]
+  sessions      TuitionSession[]
+
+  @@map("subjects")
+}
+
+/// Subjects a student is enrolled in at the tuition centre.
+model StudentSubject {
+  studentId String
+  subjectId String
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+
+  @@id([studentId, subjectId])
+  @@map("student_subjects")
+}
+
+// ───────────────────────── Attendance ─────────────────────────
+
+model Attendance {
+  id           String           @id @default(cuid())
+  studentId    String
+  date         DateTime         @db.Date
+  status       AttendanceStatus
+  note         String?
+  recordedById String
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  student    Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  recordedBy Admin   @relation(fields: [recordedById], references: [id])
+
+  @@unique([studentId, date]) /// one record per student per day
+  @@index([date])
+  @@map("attendance")
+}
+
+/// Planned tuition classes, shown as "upcoming sessions" on the dashboard.
+model TuitionSession {
+  id        String   @id @default(cuid())
+  date      DateTime @db.Date
+  startTime String /// "15:00"
+  endTime   String /// "17:00"
+  title     String
+  subjectId String?
+  notes     String?
+  isDemo    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  subject Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+
+  @@index([date])
+  @@map("tuition_sessions")
+}
+
+// ───────────────────────── Tuition exams (admin only) ─────────────────────────
+
+model TuitionExamination {
+  id          String   @id @default(cuid())
+  name        String /// e.g. "Ujian Topikal 1"
+  subjectId   String
+  date        DateTime @db.Date
+  totalMarks  Float
+  remarks     String?
+  isDemo      Boolean  @default(false)
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  subject   Subject         @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  createdBy Admin           @relation(fields: [createdById], references: [id])
+  results   TuitionResult[]
+
+  @@index([date])
+  @@map("tuition_examinations")
+}
+
+model TuitionResult {
+  id            String   @id @default(cuid())
+  examId        String
+  studentId     String
+  marksObtained Float
+  remarks       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  exam    TuitionExamination @relation(fields: [examId], references: [id], onDelete: Cascade)
+  student Student            @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([examId, studentId]) /// one mark per student per test
+  @@index([studentId])
+  @@map("tuition_results")
+}
+
+// ───────────────────────── Teacher comments ─────────────────────────
+
+model TeacherComment {
+  id          String          @id @default(cuid())
+  studentId   String
+  category    CommentCategory
+  content     String
+  commentDate DateTime        @db.Date
+  isPublished Boolean         @default(true) /// parents only see published comments
+  authorId    String
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  author  Admin   @relation(fields: [authorId], references: [id])
+
+  @@index([studentId, commentDate])
+  @@map("teacher_comments")
+}
+
+// ───────────────────────── School exams (parent input) ─────────────────────────
+
+model SchoolExamination {
+  id            String           @id @default(cuid())
+  studentId     String
+  submittedById String?
+  examType      SchoolExamType
+  examName      String           @default("") /// optional label, e.g. "Ujian Bulan Mac"
+  examDate      DateTime         @db.Date
+  remarks       String?
+  status        SubmissionStatus @default(PENDING)
+  adminNote     String? /// shown to parent, e.g. what needs correcting
+  reviewedById  String?
+  reviewedAt    DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  student     Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  submittedBy Parent?        @relation(fields: [submittedById], references: [id], onDelete: SetNull)
+  reviewedBy  Admin?         @relation(fields: [reviewedById], references: [id], onDelete: SetNull)
+  results     SchoolResult[]
+
+  @@unique([studentId, examType, examName, examDate]) /// no duplicate submissions
+  @@index([status])
+  @@map("school_examinations")
+}
+
+model SchoolResult {
+  id            String @id @default(cuid())
+  examId        String
+  subjectId     String
+  marksObtained Float
+  totalMarks    Float
+
+  exam    SchoolExamination @relation(fields: [examId], references: [id], onDelete: Cascade)
+  subject Subject           @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+
+  @@unique([examId, subjectId]) /// one mark per subject per exam
+  @@map("school_results")
+}
+
+// ───────────────────────── Security & settings ─────────────────────────
+
+/// Server-side login sessions. Only a SHA-256 hash of the cookie token is stored.
+model Session {
+  id         String   @id @default(cuid())
+  tokenHash  String   @unique
+  role       Role
+  adminId    String?
+  parentId   String?
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+
+  admin  Admin?  @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  parent Parent? @relation(fields: [parentId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+/// Used to rate-limit login attempts (brute-force protection for Parent IDs).
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  ipHash    String
+  kind      Role
+  success   Boolean
+  createdAt DateTime @default(now())
+
+  @@index([ipHash, kind, createdAt])
+  @@map("login_attempts")
+}
+
+/// Single-row table for tuition centre details used on reports.
+model AppSetting {
+  id         Int      @id @default(1)
+  centreName String   @default("Moon's Home Tuition")
+  phone      String?
+  address    String?
+  reportNote String?
+  updatedAt  DateTime @updatedAt
+
+  @@map("app_settings")
 }

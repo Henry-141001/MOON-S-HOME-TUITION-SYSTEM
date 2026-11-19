@@ -1,0 +1,119 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { z } from "zod";
+import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/session";
+import { fail, formObject, handleError, isoDate, marks, ok, optionalText, parse, text } from "@/lib/action";
+import { parseISODate } from "@/lib/dates";
+import type { ActionState } from "@/lib/action-state";
+
+const examSchema = z.object({
+  name: text("Nama ujian", 120),
+  subjectId: text("Subjek", 50),
+  date: isoDate("Tarikh ujian"),
+  totalMarks: marks("Jumlah markah").refine((n) => n > 0, "Jumlah markah mesti lebih daripada 0."),
+  remarks: optionalText(500),
+});
+
+export async function createTuitionExam(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const admin = await requireAdmin();
+  const parsed = parse(examSchema, formObject(formData));
+  if (parsed.error) return parsed.error;
+  const d = parsed.data;
+  let examId: string;
+  try {
+    const subject = await prisma.subject.findUnique({ where: { id: d.subjectId }, select: { id: true } });
+    if (!subject) return fail("Subjek tidak dijumpai.", { subjectId: "Sila pilih subjek." });
+    const exam = await prisma.tuitionExamination.create({
+      data: { ...d, date: parseISODate(d.date), createdById: admin.id },
+    });
+    examId = exam.id;
+  } catch (e) {
+    return handleError(e);
+  }
+  revalidatePath("/", "layout");
+  redirect(`/admin/markah-tuisyen/${examId}`);
+}
+
+export async function updateTuitionExam(examId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
+  await requireAdmin();
+  const parsed = parse(examSchema, formObject(formData));
+  if (parsed.error) return parsed.error;
+  const d = parsed.data;
+  try {
+    const highest = await prisma.tuitionResult.aggregate({ where: { examId }, _max: { marksObtained: true } });
+    if ((highest._max.marksObtained ?? 0) > d.totalMarks) {
+      return fail("Ada markah murid yang melebihi jumlah markah baharu.", {
+        totalMarks: `Markah tertinggi yang direkod ialah ${highest._max.marksObtained}.`,
+      });
+    }
+    await prisma.tuitionExamination.update({ where: { id: examId }, data: { ...d, date: parseISODate(d.date) } });
+  } catch (e) {
+    return handleError(e);
+  }
+  revalidatePath("/", "layout");
+  return ok("Maklumat ujian telah dikemas kini.");
+}
+
+export async function deleteTuitionExam(examId: string): Promise<ActionState> {
+  await requireAdmin();
+  try {
+    await prisma.tuitionExamination.delete({ where: { id: examId } });
+  } catch (e) {
+    return handleError(e);
+  }
+  revalidatePath("/", "layout");
+  redirect("/admin/markah-tuisyen");
+}
+
+/**
+ * Saves marks for every student listed. Fields: studentIds, marks_<id>, remarks_<id>.
+ * An empty mark removes that student's result for this test.
+ */
+export async function saveTuitionResults(examId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
+  await requireAdmin();
+  const exam = await prisma.tuitionExamination.findUnique({ where: { id: examId }, select: { totalMarks: true } });
+  if (!exam) return fail("Ujian tidak dijumpai.");
+
+  const studentIds = [...new Set(formData.getAll("studentIds").map(String))];
+  const valid = new Set(
+    (await prisma.student.findMany({ where: { id: { in: studentIds } }, select: { id: true } })).map((s) => s.id),
+  );
+
+  const fieldErrors: Record<string, string> = {};
+  const upserts: { studentId: string; marksObtained: number; remarks: string | null }[] = [];
+  const clears: string[] = [];
+  for (const studentId of studentIds) {
+    if (!valid.has(studentId)) continue;
+    const raw = String(formData.get(`marks_${studentId}`) ?? "").trim();
+    const remarks = String(formData.get(`remarks_${studentId}`) ?? "").trim().slice(0, 300) || null;
+    if (raw === "") {
+      clears.push(studentId);
+      continue;
+    }
+    const value = Number(raw);
+    if (!Number.isFinite(value) || value < 0) fieldErrors[`marks_${studentId}`] = "Markah tidak sah.";
+    else if (value > exam.totalMarks) fieldErrors[`marks_${studentId}`] = `Melebihi jumlah markah (${exam.totalMarks}).`;
+    else upserts.push({ studentId, marksObtained: value, remarks });
+  }
+  if (Object.keys(fieldErrors).length) return fail("Sila betulkan markah yang ditanda.", fieldErrors);
+
+  try {
+    await prisma.$transaction([
+      ...upserts.map((u) =>
+        prisma.tuitionResult.upsert({
+          where: { examId_studentId: { examId, studentId: u.studentId } },
+          create: { examId, ...u },
+          update: { marksObtained: u.marksObtained, remarks: u.remarks },
+        }),
+      ),
+      prisma.tuitionResult.deleteMany({ where: { examId, studentId: { in: clears } } }),
+    ]);
+  } catch (e) {
+    return handleError(e);
+  }
+  revalidatePath("/", "layout");
+  return ok(`Markah disimpan untuk ${upserts.length} murid.`);
+}
