@@ -21,6 +21,14 @@ export function NavigationProgress() {
   const currentRef = useRef(current);
   // The URL we were on when navigation started. The bar shows while we are still on it.
   const [startedOn, setStartedOn] = useState<string | null>(null);
+  // As soon as the URL changes (link, back or forward), the navigation is finished.
+  // Without this reset, pressing Back returns to the URL the bar remembered and it
+  // would wrongly show "loading" again until the safety timeout.
+  const [lastUrl, setLastUrl] = useState(current);
+  if (lastUrl !== current) {
+    setLastUrl(current);
+    setStartedOn(null);
+  }
   const active = startedOn !== null && startedOn === current;
 
   useEffect(() => {
