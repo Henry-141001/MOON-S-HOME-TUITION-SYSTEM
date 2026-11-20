@@ -39,7 +39,7 @@ import {
   uploadStudentPhoto,
 } from "@/app/admin/_actions/students";
 import { StudentForm } from "../student-form";
-import { PhotoUploader } from "../photo-uploader";
+import { PhotoUploader } from "@/components/photo-uploader";
 
 export const metadata = { title: "Profil Murid" };
 

@@ -44,18 +44,16 @@ export async function parseSchoolExamForm(
 
   for (const i of indices) {
     const subjectId = String(formData.get(`subjectId_${i}`) ?? "");
+    // Marks are entered as a percentage (0–100), so every result is stored out of 100.
     const marksRaw = String(formData.get(`marks_${i}`) ?? "").trim();
-    const totalRaw = String(formData.get(`total_${i}`) ?? "").trim();
     if (!subjectId && !marksRaw) continue; // blank row
     const marksObtained = Number(marksRaw);
-    const totalMarks = Number(totalRaw);
     if (!subjectId) fieldErrors[`subjectId_${i}`] = "Pilih subjek.";
     else if (seen.has(subjectId)) fieldErrors[`subjectId_${i}`] = "Subjek ini telah dimasukkan.";
-    if (marksRaw === "" || !Number.isFinite(marksObtained) || marksObtained < 0) fieldErrors[`marks_${i}`] = "Markah tidak sah.";
-    if (totalRaw === "" || !Number.isFinite(totalMarks) || totalMarks <= 0) fieldErrors[`total_${i}`] = "Jumlah tidak sah.";
-    else if (marksObtained > totalMarks) fieldErrors[`marks_${i}`] = "Melebihi jumlah markah.";
+    if (marksRaw === "" || !Number.isFinite(marksObtained) || marksObtained < 0) fieldErrors[`marks_${i}`] = "Peratus tidak sah.";
+    else if (marksObtained > 100) fieldErrors[`marks_${i}`] = "Maksimum 100%.";
     if (subjectId) seen.add(subjectId);
-    rows.push({ subjectId, marksObtained, totalMarks });
+    rows.push({ subjectId, marksObtained, totalMarks: 100 });
   }
 
   if (Object.keys(fieldErrors).length) return { error: fail("Sila betulkan markah yang ditanda.", fieldErrors) };

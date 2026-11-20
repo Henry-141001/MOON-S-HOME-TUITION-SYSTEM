@@ -4,10 +4,11 @@ import { useState } from "react";
 import { Plus, X } from "lucide-react";
 import { ActionForm, Field, FieldError, SubmitButton } from "@/components/forms";
 import { buttonClass, cn, inputClass, Input, Select, Textarea } from "@/components/ui";
-import { SCHOOL_EXAM_LABELS, SCHOOL_EXAM_TYPES } from "@/lib/constants";
+import { SCHOOL_EXAM_LABELS, SCHOOL_EXAM_TYPES, gradeFor } from "@/lib/constants";
 import type { ActionState } from "@/lib/action-state";
 
-type Row = { key: number; subjectId: string; marks: string; total: string };
+/** One subject row. `marks` is the percentage (0–100) as typed. */
+type Row = { key: number; subjectId: string; marks: string };
 
 export function SchoolExamForm({
   action,
@@ -24,7 +25,7 @@ export function SchoolExamForm({
     examName?: string;
     examDate?: string;
     remarks?: string | null;
-    rows?: { subjectId: string; marks: number; total: number }[];
+    rows?: { subjectId: string; percent: number }[];
   };
   submitLabel: string;
   maxDate: string;
@@ -33,8 +34,8 @@ export function SchoolExamForm({
 }) {
   const initialRows = (): Row[] =>
     defaults?.rows?.length
-      ? defaults.rows.map((r, i) => ({ key: i, subjectId: r.subjectId, marks: String(r.marks), total: String(r.total) }))
-      : [{ key: 0, subjectId: "", marks: "", total: "100" }];
+      ? defaults.rows.map((r, i) => ({ key: i, subjectId: r.subjectId, marks: String(r.percent) }))
+      : [{ key: 0, subjectId: "", marks: "" }];
   const [rows, setRows] = useState<Row[]>(initialRows);
   const [examType, setExamType] = useState(defaults?.examType ?? "");
   const nextKey = () => Math.max(-1, ...rows.map((r) => r.key)) + 1;
@@ -48,7 +49,7 @@ export function SchoolExamForm({
       onSuccess={
         clearAfterSubmit
           ? () => {
-              setRows([{ key: Date.now(), subjectId: "", marks: "", total: "100" }]);
+              setRows([{ key: Date.now(), subjectId: "", marks: "" }]);
               setExamType("");
             }
           : undefined
@@ -82,17 +83,16 @@ export function SchoolExamForm({
       </div>
 
       <fieldset>
-        <legend className="text-[13px] font-medium text-ink-soft">Markah Mengikut Subjek</legend>
+        <legend className="text-[13px] font-medium text-ink-soft">Peratus Markah Mengikut Subjek</legend>
         <div className="mt-2 space-y-2">
           {rows.map((r) => {
             const m = Number(r.marks);
-            const t = Number(r.total);
-            const pct = r.marks !== "" && r.total !== "" && t > 0 && m >= 0 && m <= t ? Math.round((m / t) * 1000) / 10 : null;
+            const pct = r.marks !== "" && Number.isFinite(m) && m >= 0 && m <= 100 ? m : null;
             return (
               <div key={r.key} className="rounded-2xl border border-line bg-beige-50/40 p-3">
                 <input type="hidden" name="row" value={r.key} />
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-[1fr_110px_110px_80px_36px] sm:items-start">
-                  <div className="col-span-2 sm:col-span-1">
+                <div className="grid grid-cols-[1fr_auto_36px] gap-2 sm:grid-cols-[1fr_130px_64px_36px] sm:items-start">
+                  <div className="col-span-3 sm:col-span-1">
                     <select
                       name={`subjectId_${r.key}`}
                       value={r.subjectId}
@@ -110,36 +110,27 @@ export function SchoolExamForm({
                     <FieldError name={`subjectId_${r.key}`} />
                   </div>
                   <div>
-                    <input
-                      name={`marks_${r.key}`}
-                      value={r.marks}
-                      onChange={(e) => set(r.key, { marks: e.target.value })}
-                      type="number"
-                      inputMode="decimal"
-                      min={0}
-                      step="0.5"
-                      placeholder="Markah"
-                      aria-label="Markah diperoleh"
-                      className={cn(inputClass, "py-2")}
-                    />
+                    <div className="relative">
+                      <input
+                        name={`marks_${r.key}`}
+                        value={r.marks}
+                        onChange={(e) => set(r.key, { marks: e.target.value })}
+                        type="number"
+                        inputMode="decimal"
+                        min={0}
+                        max={100}
+                        step="0.1"
+                        placeholder="Peratus"
+                        aria-label="Peratus markah"
+                        className={cn(inputClass, "py-2 pr-8")}
+                      />
+                      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted">%</span>
+                    </div>
                     <FieldError name={`marks_${r.key}`} />
                   </div>
-                  <div>
-                    <input
-                      name={`total_${r.key}`}
-                      value={r.total}
-                      onChange={(e) => set(r.key, { total: e.target.value })}
-                      type="number"
-                      inputMode="decimal"
-                      min={1}
-                      step="0.5"
-                      placeholder="Jumlah"
-                      aria-label="Jumlah markah"
-                      className={cn(inputClass, "py-2")}
-                    />
-                    <FieldError name={`total_${r.key}`} />
+                  <div className="flex h-10 min-w-16 items-center justify-center text-sm font-semibold text-sage-700" aria-live="polite">
+                    {pct === null ? <span className="font-normal text-muted">Gred –</span> : `Gred ${gradeFor(pct).grade}`}
                   </div>
-                  <div className="flex h-10 items-center text-sm font-medium text-sage-700">{pct === null ? "—" : `${pct}%`}</div>
                   <button
                     type="button"
                     onClick={() => setRows((rs) => (rs.length > 1 ? rs.filter((x) => x.key !== r.key) : rs))}
@@ -157,11 +148,11 @@ export function SchoolExamForm({
         <button
           type="button"
           className={cn(buttonClass("soft", "sm"), "mt-3")}
-          onClick={() => setRows((rs) => [...rs, { key: nextKey(), subjectId: "", marks: "", total: rs[rs.length - 1]?.total ?? "100" }])}
+          onClick={() => setRows((rs) => [...rs, { key: nextKey(), subjectId: "", marks: "" }])}
         >
           <Plus className="size-4" /> Tambah Subjek
         </button>
-        <p className="mt-2 text-xs text-muted">Peratus dikira secara automatik.</p>
+        <p className="mt-2 text-xs text-muted">Masukkan markah dalam peratus (0–100%), seperti dalam slip keputusan sekolah.</p>
       </fieldset>
 
       <Field label="Catatan (pilihan)" name="remarks">

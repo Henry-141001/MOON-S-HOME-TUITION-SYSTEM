@@ -87,7 +87,7 @@ export default async function ParentSchoolPage({ searchParams }: PageProps<"/ibu
                             examName: e.examName,
                             examDate: e.date,
                             remarks: e.remarks,
-                            rows: e.results.map((x) => ({ subjectId: x.subjectId, marks: x.marks, total: x.total })),
+                            rows: e.results.map((x) => ({ subjectId: x.subjectId, percent: x.percent })),
                           }}
                           submitLabel="Simpan & Hantar Semula"
                         />

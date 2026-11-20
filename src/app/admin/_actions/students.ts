@@ -10,6 +10,7 @@ import { parseISODate } from "@/lib/dates";
 import { normaliseCode } from "@/lib/security";
 import { nextStudentCode } from "@/lib/codes";
 import { adminActor, logActivity, studentLabel } from "@/lib/activity";
+import { deleteStudentPhoto, saveStudentPhoto } from "@/lib/photos";
 import type { ActionState } from "@/lib/action-state";
 
 const studentSchema = z.object({
@@ -138,23 +139,11 @@ export async function deleteStudent(studentId: string): Promise<ActionState> {
   redirect("/admin/murid");
 }
 
-const MAX_PHOTO_BYTES = 1.5 * 1024 * 1024;
-const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
-
 export async function uploadStudentPhoto(studentId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
   const admin = await requireAdmin();
-  const file = formData.get("photo");
-  if (!(file instanceof File) || file.size === 0) return fail("Sila pilih gambar.");
-  if (!PHOTO_TYPES.includes(file.type)) return fail("Format gambar mesti JPG, PNG atau WEBP.");
-  if (file.size > MAX_PHOTO_BYTES) return fail("Saiz gambar terlalu besar (maksimum 1.5MB).");
-
   try {
-    const data = new Uint8Array(await file.arrayBuffer());
-    await prisma.studentPhoto.upsert({
-      where: { studentId },
-      create: { studentId, data, mimeType: file.type },
-      update: { data, mimeType: file.type },
-    });
+    const problem = await saveStudentPhoto(studentId, formData.get("photo"));
+    if (problem) return fail(problem);
     await logActivity(adminActor(admin), "student.photo", `Memuat naik gambar murid ${await studentLabel(studentId)}`, studentId);
   } catch (e) {
     return handleError(e);
@@ -166,7 +155,7 @@ export async function uploadStudentPhoto(studentId: string, _prev: ActionState, 
 export async function removeStudentPhoto(studentId: string): Promise<ActionState> {
   const admin = await requireAdmin();
   try {
-    await prisma.studentPhoto.deleteMany({ where: { studentId } });
+    await deleteStudentPhoto(studentId);
     await logActivity(adminActor(admin), "student.photo", `Membuang gambar murid ${await studentLabel(studentId)}`, studentId);
   } catch (e) {
     return handleError(e);

@@ -211,9 +211,6 @@ export default async function AdminDashboard() {
                       </p>
                     </div>
                     <div className="flex shrink-0 items-center gap-2 text-sm">
-                      <span className="hidden text-ink-soft sm:inline">
-                        {r.marksObtained}/{r.exam.totalMarks}
-                      </span>
                       <PercentPill value={percent(r.marksObtained, r.exam.totalMarks)} />
                       <RowChevron />
                     </div>

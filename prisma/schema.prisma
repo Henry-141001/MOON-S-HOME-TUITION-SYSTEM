@@ -1,4 +1,4 @@
-// Moon's Home Tuition System — database schema
+// Moons Home Tutor System — database schema
 // Two roles only: ADMIN (the teacher) and PARENT.
 // After changing models, run: npm run db:migrate
 
@@ -383,7 +383,7 @@ model ActivityLog {
 /// Single-row table for tuition centre details used on reports.
 model AppSetting {
   id         Int      @id @default(1)
-  centreName String   @default("Moon's Home Tuition")
+  centreName String   @default("Moons Home Tutor")
   phone      String?
   address    String?
   reportNote String?

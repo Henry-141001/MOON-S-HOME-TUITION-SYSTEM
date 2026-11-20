@@ -1,4 +1,5 @@
 // Server-safe presentational building blocks.
+import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
@@ -281,14 +282,27 @@ export function MoonMark({ className }: { className?: string }) {
   );
 }
 
+/** The round Moons Home Tutor badge (public/brand/logo.png). */
+export function BrandMark({ size = 40, className, priority = false }: { size?: number; className?: string; priority?: boolean }) {
+  return (
+    <Image
+      src="/brand/logo.png"
+      alt="Logo Moons Home Tutor"
+      width={size}
+      height={size}
+      priority={priority}
+      className={cn("shrink-0 rounded-full shadow-sm ring-1 ring-black/5", className)}
+      style={{ width: size, height: size }}
+    />
+  );
+}
+
 export function BrandLogo({ subtitle }: { subtitle?: string }) {
   return (
     <div className="flex items-center gap-2.5">
-      <span className="grid size-10 place-items-center rounded-2xl bg-sage-600 text-beige-50">
-        <MoonMark className="size-6" />
-      </span>
+      <BrandMark size={42} />
       <div className="leading-tight">
-        <p className="font-display text-[15px] font-semibold tracking-wide text-ink">MOON&apos;S HOME TUITION</p>
+        <p className="font-display text-[15px] font-semibold tracking-wide text-ink">MOONS HOME TUTOR</p>
         {subtitle && <p className="text-xs text-muted">{subtitle}</p>}
       </div>
     </div>

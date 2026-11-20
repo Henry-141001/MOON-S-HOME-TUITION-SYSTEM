@@ -4,7 +4,8 @@ import { requireAdminView } from "@/lib/session";
 import { buildStudentReport } from "@/lib/report";
 import { formatDate, formatLongDate, formatMonth, todayISO } from "@/lib/dates";
 import { COMMENT_LABELS, gradeFor } from "@/lib/constants";
-import { ButtonLink, MoonMark, PercentPill, Table, TrendText, buttonClass, cn, td, th } from "@/components/ui";
+import { BrandMark, ButtonLink, PercentPill, Table, TrendText, buttonClass, cn, td, th } from "@/components/ui";
+import { BRAND_TAGLINE } from "@/lib/constants";
 import { StudentAvatar } from "@/components/records";
 import { PercentBarChart } from "@/components/charts";
 import { PrintButton } from "./print-button";
@@ -42,12 +43,13 @@ export default async function StudentReportPage({ params }: PageProps<"/admin/la
         {/* Letterhead */}
         <header className="flex flex-wrap items-start justify-between gap-4 border-b-2 border-sage-600 pb-5">
           <div className="flex items-center gap-3">
-            <span className="grid size-12 place-items-center rounded-2xl bg-sage-600 text-beige-50">
-              <MoonMark className="size-7" />
-            </span>
+            <BrandMark size={64} />
             <div>
               <p className="font-display text-xl font-semibold tracking-wide text-ink">{r.centre.name.toUpperCase()}</p>
-              <p className="text-xs text-muted">{[r.centre.address, r.centre.phone].filter(Boolean).join(" · ") || "Pusat Tuisyen Rumah"}</p>
+              <p className="text-xs tracking-wide text-muted">{BRAND_TAGLINE}</p>
+              {(r.centre.address || r.centre.phone) && (
+                <p className="text-xs text-muted">{[r.centre.address, r.centre.phone].filter(Boolean).join(" · ")}</p>
+              )}
             </div>
           </div>
           <div className="text-right">
@@ -119,8 +121,7 @@ export default async function StudentReportPage({ params }: PageProps<"/admin/la
                   <th className={th}>Tarikh</th>
                   <th className={th}>Ujian</th>
                   <th className={th}>Subjek</th>
-                  <th className={th}>Markah</th>
-                  <th className={th}>%</th>
+                  <th className={th}>Peratus</th>
                   <th className={th}>Gred</th>
                 </tr>
               </thead>
@@ -130,10 +131,7 @@ export default async function StudentReportPage({ params }: PageProps<"/admin/la
                     <td className={cn(td, "whitespace-nowrap py-2")}>{formatDate(t.date)}</td>
                     <td className={cn(td, "py-2")}>{t.examName}</td>
                     <td className={cn(td, "py-2")}>{t.subject}</td>
-                    <td className={cn(td, "py-2")}>
-                      {t.marks}/{t.total}
-                    </td>
-                    <td className={cn(td, "py-2")}>{t.percent.toFixed(1)}</td>
+                    <td className={cn(td, "py-2")}>{t.percent.toFixed(1)}%</td>
                     <td className={cn(td, "py-2 font-semibold")}>{gradeFor(t.percent).grade}</td>
                   </tr>
                 ))}
@@ -161,7 +159,7 @@ export default async function StudentReportPage({ params }: PageProps<"/admin/la
                       <p key={x.id} className="flex justify-between gap-2">
                         <span className="text-ink-soft">{x.subject}</span>
                         <span className="font-medium">
-                          {x.marks}/{x.total} ({gradeFor(x.percent).grade})
+                          {x.percent}% ({gradeFor(x.percent).grade})
                         </span>
                       </p>
                     ))}

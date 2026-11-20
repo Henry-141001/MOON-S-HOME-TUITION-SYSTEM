@@ -73,7 +73,6 @@ export default async function TuitionExamsPage({ searchParams }: PageProps<"/adm
                 <th className={th}>Tarikh</th>
                 <th className={th}>Ujian</th>
                 <th className={th}>Subjek</th>
-                <th className={th}>Jumlah Markah</th>
                 <th className={th}>Murid</th>
                 <th className={th}>Purata Kelas</th>
                 <th className={th}></th>
@@ -87,7 +86,6 @@ export default async function TuitionExamsPage({ searchParams }: PageProps<"/adm
                     {e.name} {e.isDemo && <DemoBadge />}
                   </td>
                   <td className={td}>{e.subject.name}</td>
-                  <td className={td}>{e.totalMarks}</td>
                   <td className={td}>{e.results.length}</td>
                   <td className={td}>
                     <PercentPill value={average(e.results.map((r) => percent(r.marksObtained, e.totalMarks)))} />

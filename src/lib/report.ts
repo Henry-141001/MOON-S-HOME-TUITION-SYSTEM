@@ -49,7 +49,7 @@ export async function buildStudentReport(studentId: string) {
 
   return {
     centre: {
-      name: settings?.centreName ?? "Moon's Home Tuition",
+      name: settings?.centreName ?? "Moons Home Tutor",
       phone: settings?.phone ?? null,
       address: settings?.address ?? null,
       note: settings?.reportNote ?? null,

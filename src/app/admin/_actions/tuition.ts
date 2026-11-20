@@ -5,16 +5,18 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
-import { fail, formObject, handleError, isoDate, marks, ok, optionalText, parse, text } from "@/lib/action";
+import { fail, formObject, handleError, isoDate, ok, optionalText, parse, text } from "@/lib/action";
 import { formatDate, parseISODate } from "@/lib/dates";
 import { adminActor, logActivity } from "@/lib/activity";
 import type { ActionState } from "@/lib/action-state";
+
+// Marks are entered as percentages, so every test is out of 100.
+const PERCENT_TOTAL = 100;
 
 const examSchema = z.object({
   name: text("Nama ujian", 120),
   subjectId: text("Subjek", 50),
   date: isoDate("Tarikh ujian"),
-  totalMarks: marks("Jumlah markah").refine((n) => n > 0, "Jumlah markah mesti lebih daripada 0."),
   remarks: optionalText(500),
 });
 
@@ -28,7 +30,7 @@ export async function createTuitionExam(_prev: ActionState, formData: FormData):
     const subject = await prisma.subject.findUnique({ where: { id: d.subjectId }, select: { id: true } });
     if (!subject) return fail("Subjek tidak dijumpai.", { subjectId: "Sila pilih subjek." });
     const exam = await prisma.tuitionExamination.create({
-      data: { ...d, date: parseISODate(d.date), createdById: admin.id },
+      data: { ...d, totalMarks: PERCENT_TOTAL, date: parseISODate(d.date), createdById: admin.id },
     });
     examId = exam.id;
     await logActivity(adminActor(admin), "tuition.exam.create", `Mencipta ujian tuisyen "${d.name}" (${formatDate(d.date)})`);
@@ -45,12 +47,6 @@ export async function updateTuitionExam(examId: string, _prev: ActionState, form
   if (parsed.error) return parsed.error;
   const d = parsed.data;
   try {
-    const highest = await prisma.tuitionResult.aggregate({ where: { examId }, _max: { marksObtained: true } });
-    if ((highest._max.marksObtained ?? 0) > d.totalMarks) {
-      return fail("Ada markah murid yang melebihi jumlah markah baharu.", {
-        totalMarks: `Markah tertinggi yang direkod ialah ${highest._max.marksObtained}.`,
-      });
-    }
     await prisma.tuitionExamination.update({ where: { id: examId }, data: { ...d, date: parseISODate(d.date) } });
     await logActivity(adminActor(admin), "tuition.exam.update", `Mengemas kini ujian tuisyen "${d.name}" (${formatDate(d.date)})`);
   } catch (e) {
@@ -99,7 +95,7 @@ export async function saveTuitionResults(examId: string, _prev: ActionState, for
     }
     const value = Number(raw);
     if (!Number.isFinite(value) || value < 0) fieldErrors[`marks_${studentId}`] = "Markah tidak sah.";
-    else if (value > exam.totalMarks) fieldErrors[`marks_${studentId}`] = `Melebihi jumlah markah (${exam.totalMarks}).`;
+    else if (value > exam.totalMarks) fieldErrors[`marks_${studentId}`] = `Maksimum ${exam.totalMarks}%.`;
     else upserts.push({ studentId, marksObtained: value, remarks });
   }
   if (Object.keys(fieldErrors).length) return fail("Sila betulkan markah yang ditanda.", fieldErrors);

@@ -6,7 +6,9 @@ import type {
   SubmissionStatus,
 } from "@/generated/prisma/enums";
 
-export const BRAND = "MOON'S HOME TUITION";
+export const BRAND = "MOONS HOME TUTOR";
+export const BRAND_NAME = "Moons Home Tutor";
+export const BRAND_TAGLINE = "Adab · Rajin · Berjaya";
 
 export const ATTENDANCE_LABELS: Record<AttendanceStatus, string> = {
   PRESENT: "Hadir",

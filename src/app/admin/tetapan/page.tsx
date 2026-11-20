@@ -67,7 +67,7 @@ export default async function SettingsPage() {
           <CardBody>
             <ActionForm action={updateCentreSettings} className="space-y-4">
               <Field label="Nama pusat tuisyen" name="centreName" required>
-                <Input id="centreName" name="centreName" defaultValue={settings?.centreName ?? "Moon's Home Tuition"} required />
+                <Input id="centreName" name="centreName" defaultValue={settings?.centreName ?? "Moons Home Tutor"} required />
               </Field>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="No. telefon" name="phone">

@@ -181,7 +181,6 @@ export function TuitionResultsTable({ rows, limit }: { rows: StudentRecords["tui
           <th className={th}>Tarikh</th>
           <th className={th}>Ujian</th>
           <th className={th}>Subjek</th>
-          <th className={th}>Markah</th>
           <th className={th}>Peratus</th>
           <th className={th}>Gred</th>
           <th className={th}>Catatan</th>
@@ -193,9 +192,6 @@ export function TuitionResultsTable({ rows, limit }: { rows: StudentRecords["tui
             <td className={cn(td, "whitespace-nowrap")}>{formatDate(r.date)}</td>
             <td className={cn(td, "font-medium")}>{r.examName}</td>
             <td className={td}>{r.subject}</td>
-            <td className={cn(td, "whitespace-nowrap")}>
-              {r.marks} / {r.total}
-            </td>
             <td className={td}>
               <PercentPill value={r.percent} />
             </td>
@@ -237,32 +233,17 @@ export function SchoolExamCard({
           <span className="font-medium">Catatan guru:</span> {exam.adminNote}
         </div>
       )}
-      <div className="border-t border-line">
-        <Table>
-          <thead>
-            <tr>
-              <th className={th}>Subjek</th>
-              <th className={th}>Markah</th>
-              <th className={th}>Peratus</th>
-              <th className={th}>Gred</th>
-            </tr>
-          </thead>
-          <tbody>
-            {exam.results.map((r) => (
-              <tr key={r.id}>
-                <td className={td}>{r.subject}</td>
-                <td className={td}>
-                  {r.marks} / {r.total}
-                </td>
-                <td className={td}>
-                  <PercentPill value={r.percent} />
-                </td>
-                <td className={cn(td, "font-semibold")}>{gradeFor(r.percent).grade}</td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      </div>
+      <ul className="grid gap-x-6 border-t border-line px-4 py-2 sm:grid-cols-2">
+        {exam.results.map((r) => (
+          <li key={r.id} className="flex items-center justify-between gap-3 border-b border-line py-2 last:border-b-0 sm:[&:nth-last-child(2):nth-child(odd)]:border-b-0">
+            <span className="min-w-0 truncate text-sm text-ink">{r.subject}</span>
+            <span className="flex shrink-0 items-center gap-2">
+              <PercentPill value={r.percent} />
+              <span className="w-12 text-right text-sm font-semibold text-ink-soft">Gred {gradeFor(r.percent).grade}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
       {(exam.remarks || actions) && (
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-4 py-3">
           <p className="text-[13px] text-ink-soft">{exam.remarks ? <>Catatan: {exam.remarks}</> : null}</p>

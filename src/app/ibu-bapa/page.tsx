@@ -1,8 +1,11 @@
 import Link from "next/link";
-import { CalendarCheck, CalendarX, Percent, Send, Trophy } from "lucide-react";
+import { BellRing, CalendarCheck, CalendarX, Clock, Percent, Send, Trophy } from "lucide-react";
 import { getStudentRecords } from "@/lib/records";
-import { formatDate } from "@/lib/dates";
-import { SUBMISSION_LABELS } from "@/lib/constants";
+import { formatDate, formatLongDate } from "@/lib/dates";
+import { formatTime12, upcomingClassesForStudent } from "@/lib/schedule";
+import { PhotoUploader } from "@/components/photo-uploader";
+import { removeChildPhoto, uploadChildPhoto } from "./_actions";
+import { SUBMISSION_LABELS, gradeFor } from "@/lib/constants";
 import {
   Badge,
   ButtonLink,
@@ -24,17 +27,75 @@ export const metadata = { title: "Maklumat Murid" };
 export default async function ParentHome({ searchParams }: PageProps<"/ibu-bapa">) {
   const { parent, child } = await getParentView(searchParams);
   if (!child) return <NoChildLinked />;
-  const r = await getStudentRecords(child.id, { audience: "parent" });
+  const [r, classes] = await Promise.all([
+    getStudentRecords(child.id, { audience: "parent" }),
+    upcomingClassesForStudent(child.subjects.map((s) => s.subject.id)),
+  ]);
   const latestSchool = r.school[0];
+  const [nextClass, ...laterClasses] = classes;
 
   return (
     <>
-      <PageHeader title={`Selamat datang, ${parent.name}`} description="Ringkasan perkembangan anak anda di Moon's Home Tuition." />
+      <PageHeader title={`Selamat datang, ${parent.name}`} description="Ringkasan perkembangan anak anda di Moons Home Tutor." />
+
+      {/* Next class reminder */}
+      {nextClass && (
+        <section
+          aria-label="Kelas seterusnya"
+          className="mb-6 overflow-hidden rounded-[var(--radius-card)] border border-sage-200 bg-sage-600 text-white shadow-[var(--shadow-soft)]"
+        >
+          <div className="flex items-start gap-4 p-5">
+            <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/15">
+              <BellRing className="size-6" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium uppercase tracking-wide text-white/75">
+                {nextClass.ongoing ? "Kelas sedang berlangsung" : "Peringatan · Kelas seterusnya"}
+              </p>
+              <p className="mt-1 font-display text-xl font-semibold leading-snug">
+                {nextClass.when ? `${nextClass.when}, ` : ""}
+                {formatLongDate(nextClass.date)}
+              </p>
+              <p className="mt-1 flex flex-wrap items-center gap-x-2 text-[15px] text-white/90">
+                <Clock className="size-4" />
+                {formatTime12(nextClass.startTime)} – {formatTime12(nextClass.endTime)}
+              </p>
+              <p className="mt-2 text-sm text-white/90">
+                {nextClass.title}
+                {nextClass.subject ? ` · ${nextClass.subject}` : ""}
+              </p>
+              {nextClass.notes && <p className="mt-1 text-sm text-white/75">Nota: {nextClass.notes}</p>}
+            </div>
+          </div>
+          {laterClasses.length > 0 && (
+            <ul className="divide-y divide-white/10 border-t border-white/15 bg-sage-700/40">
+              {laterClasses.map((c) => (
+                <li key={c.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 px-5 py-2.5 text-sm">
+                  <span className="font-medium">
+                    {c.when ? `${c.when} · ` : ""}
+                    {formatDate(c.date)}
+                  </span>
+                  <span className="text-white/80">
+                    {formatTime12(c.startTime)} · {c.subject ?? c.title}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
 
       {/* A. Child profile */}
       <Card>
         <CardBody className="flex flex-col gap-5 py-6 sm:flex-row sm:items-start">
-          <StudentAvatar studentId={child.id} name={child.fullName} photoVersion={child.photo?.updatedAt} size={96} />
+          <div className="flex flex-col items-start gap-3">
+            <StudentAvatar studentId={child.id} name={child.fullName} photoVersion={child.photo?.updatedAt} size={96} />
+            <PhotoUploader
+              upload={uploadChildPhoto.bind(null, child.id)}
+              remove={removeChildPhoto.bind(null, child.id)}
+              hasPhoto={Boolean(child.photo)}
+            />
+          </div>
           <div className="min-w-0 flex-1 space-y-4">
             <div>
               <h2 className="flex flex-wrap items-center gap-2 font-display text-2xl font-semibold text-ink">
@@ -94,11 +155,9 @@ export default async function ParentHome({ searchParams }: PageProps<"/ibu-bapa"
                     </p>
                     <p className="text-xs text-muted">{formatDate(t.date)}</p>
                   </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-ink-soft">
-                      {t.marks}/{t.total}
-                    </span>
+                  <div className="flex shrink-0 items-center gap-2 text-sm">
                     <PercentPill value={t.percent} />
+                    <span className="font-semibold text-ink-soft">Gred {gradeFor(t.percent).grade}</span>
                   </div>
                 </li>
               ))}
@@ -138,7 +197,7 @@ export default async function ParentHome({ searchParams }: PageProps<"/ibu-bapa"
                   <li key={x.id} className="flex items-center justify-between rounded-xl bg-beige-50 px-3 py-2 text-sm">
                     <span className="text-ink-soft">{x.subject}</span>
                     <span className="font-medium">
-                      {x.marks}/{x.total}
+                      {x.percent}% · Gred {gradeFor(x.percent).grade}
                     </span>
                   </li>
                 ))}

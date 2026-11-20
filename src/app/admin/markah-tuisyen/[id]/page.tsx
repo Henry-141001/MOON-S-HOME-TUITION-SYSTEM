@@ -65,7 +65,7 @@ export default async function TuitionExamPage({ params }: PageProps<"/admin/mark
         title={exam.name}
         description={
           <span className="inline-flex flex-wrap items-center gap-2">
-            {exam.subject.name} · {formatLongDate(exam.date)} · Jumlah markah {exam.totalMarks}
+            {exam.subject.name} · {formatLongDate(exam.date)} · Markah dalam peratus
             {exam.isDemo && <DemoBadge />}
           </span>
         }
@@ -90,7 +90,6 @@ export default async function TuitionExamPage({ params }: PageProps<"/admin/mark
                   name: exam.name,
                   subjectId: exam.subjectId,
                   date: toISODate(exam.date),
-                  totalMarks: exam.totalMarks,
                   remarks: exam.remarks,
                 }}
                 submitLabel="Simpan Perubahan"
@@ -108,7 +107,7 @@ export default async function TuitionExamPage({ params }: PageProps<"/admin/mark
       <Card>
         <CardHeader
           title="Markah Murid"
-          description={exam.remarks ?? "Masukkan markah setiap murid. Peratus dikira secara automatik."}
+          description={exam.remarks ?? "Masukkan peratus markah (0–100%) setiap murid."}
           actions={
             <span className="flex items-center gap-2 text-sm text-muted">
               Purata kelas: <PercentPill value={avg} />
@@ -118,7 +117,7 @@ export default async function TuitionExamPage({ params }: PageProps<"/admin/mark
         {rows.length === 0 ? (
           <EmptyState title="Tiada murid aktif" />
         ) : (
-          <MarksSheet rows={rows} totalMarks={exam.totalMarks} action={saveTuitionResults.bind(null, exam.id)} />
+          <MarksSheet rows={rows} action={saveTuitionResults.bind(null, exam.id)} />
         )}
       </Card>
     </>

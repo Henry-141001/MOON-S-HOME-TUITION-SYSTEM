@@ -1,8 +1,11 @@
 import "server-only";
-import { Document, Page, Path, StyleSheet, Svg, Text, View } from "@react-pdf/renderer";
+import { Document, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 import type { StudentReport } from "@/lib/report";
-import { COMMENT_LABELS, gradeFor } from "@/lib/constants";
+import { BRAND_TAGLINE, COMMENT_LABELS, gradeFor } from "@/lib/constants";
+import { LOGO_PNG_BASE64 } from "@/lib/logo-data";
 import { formatDate, formatLongDate, formatMonth, todayISO } from "@/lib/dates";
+
+const LOGO_SRC = { data: Buffer.from(LOGO_PNG_BASE64, "base64"), format: "png" as const };
 
 const C = {
   sage: "#5b7a59",
@@ -18,7 +21,6 @@ const s = StyleSheet.create({
   page: { padding: 36, paddingBottom: 56, fontSize: 9.5, fontFamily: "Helvetica", color: C.ink, lineHeight: 1.4 },
   header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderBottom: `2pt solid ${C.sage}`, paddingBottom: 10 },
   brandRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  logo: { width: 30, height: 30, borderRadius: 8, backgroundColor: C.sage, alignItems: "center", justifyContent: "center" },
   brand: { fontSize: 14, fontFamily: "Helvetica-Bold", letterSpacing: 0.6 },
   small: { fontSize: 8, color: C.muted },
   title: { fontSize: 12, fontFamily: "Helvetica-Bold", color: C.sage, textAlign: "right" },
@@ -99,14 +101,14 @@ export function ReportDocument({ r }: { r: StudentReport }) {
         </Text>
         <View style={s.header}>
           <View style={s.brandRow}>
-            <View style={s.logo}>
-              <Svg viewBox="0 0 32 32" width={20} height={20}>
-                <Path d="M20.5 4.5a12 12 0 1 0 7 19.8A10 10 0 0 1 20.5 4.5Z" fill="#f7f2e9" />
-              </Svg>
-            </View>
+            {/* eslint-disable-next-line jsx-a11y/alt-text -- react-pdf Image has no alt prop */}
+            <Image src={LOGO_SRC} style={{ width: 46, height: 46 }} />
             <View>
               <Text style={s.brand}>{r.centre.name.toUpperCase()}</Text>
-              <Text style={s.small}>{[r.centre.address, r.centre.phone].filter(Boolean).join("  |  ") || "Pusat Tuisyen Rumah"}</Text>
+              <Text style={s.small}>{BRAND_TAGLINE}</Text>
+              {(r.centre.address || r.centre.phone) && (
+                <Text style={s.small}>{[r.centre.address, r.centre.phone].filter(Boolean).join("  |  ")}</Text>
+              )}
             </View>
           </View>
           <View>
@@ -189,19 +191,17 @@ export function ReportDocument({ r }: { r: StudentReport }) {
           ) : (
             <Table
               cols={[
-                { label: "Tarikh", width: "15%" },
-                { label: "Ujian", width: "33%" },
-                { label: "Subjek", width: "20%" },
-                { label: "Markah", width: "12%" },
-                { label: "%", width: "10%" },
+                { label: "Tarikh", width: "16%" },
+                { label: "Ujian", width: "38%" },
+                { label: "Subjek", width: "22%" },
+                { label: "Peratus", width: "14%" },
                 { label: "Gred", width: "10%" },
               ]}
               rows={r.tuition.map((t) => [
                 formatDate(t.date),
                 t.examName,
                 t.subject,
-                `${t.marks}/${t.total}`,
-                t.percent.toFixed(1),
+                `${t.percent.toFixed(1)}%`,
                 gradeFor(t.percent).grade,
               ])}
             />
@@ -217,13 +217,13 @@ export function ReportDocument({ r }: { r: StudentReport }) {
               cols={[
                 { label: "Peperiksaan", width: "30%" },
                 { label: "Tarikh", width: "14%" },
-                { label: "Subjek & Markah", width: "44%" },
+                { label: "Subjek & Peratus", width: "44%" },
                 { label: "Purata", width: "12%" },
               ]}
               rows={r.school.map((e) => [
                 e.title,
                 formatDate(e.date),
-                e.results.map((x) => `${x.subject}: ${x.marks}/${x.total} (${gradeFor(x.percent).grade})`).join("\n"),
+                e.results.map((x) => `${x.subject}: ${x.percent}% (${gradeFor(x.percent).grade})`).join("\n"),
                 pct(e.overall),
               ])}
             />

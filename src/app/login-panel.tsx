@@ -50,7 +50,7 @@ function TabButton({
       )}
     >
       {icon}
-      {children}
+      <span>{children}</span>
     </button>
   );
 }

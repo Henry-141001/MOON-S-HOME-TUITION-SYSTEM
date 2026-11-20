@@ -10,7 +10,7 @@ export function ExamForm({
 }: {
   action: (prev: ActionState, formData: FormData) => Promise<ActionState>;
   subjects: { id: string; name: string }[];
-  defaults?: { name?: string; subjectId?: string; date?: string; totalMarks?: number; remarks?: string | null };
+  defaults?: { name?: string; subjectId?: string; date?: string; remarks?: string | null };
   submitLabel: string;
 }) {
   return (
@@ -34,10 +34,10 @@ export function ExamForm({
         <Field label="Tarikh ujian" name="date" required>
           <Input id="date" name="date" type="date" defaultValue={defaults.date} required />
         </Field>
-        <Field label="Jumlah markah" name="totalMarks" required>
-          <Input id="totalMarks" name="totalMarks" type="number" min={1} step="0.5" defaultValue={defaults.totalMarks ?? 100} required />
-        </Field>
       </div>
+      <p className="rounded-xl bg-sage-50 px-3.5 py-2.5 text-[13px] text-sage-700">
+        Markah setiap murid dimasukkan dalam <strong>peratus (0–100%)</strong>.
+      </p>
       <Field label="Catatan (pilihan)" name="remarks">
         <Textarea id="remarks" name="remarks" defaultValue={defaults.remarks ?? ""} />
       </Field>

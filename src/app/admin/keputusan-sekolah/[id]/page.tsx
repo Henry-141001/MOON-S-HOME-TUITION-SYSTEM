@@ -93,7 +93,7 @@ export default async function SchoolExamReviewPage({ params }: PageProps<"/admin
                     examName: current.examName,
                     examDate: current.date,
                     remarks: current.remarks,
-                    rows: current.results.map((r) => ({ subjectId: r.subjectId, marks: r.marks, total: r.total })),
+                    rows: current.results.map((r) => ({ subjectId: r.subjectId, percent: r.percent })),
                   }}
                   submitLabel="Simpan Pembetulan"
                 />
