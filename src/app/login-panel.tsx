@@ -106,7 +106,7 @@ function ParentForm() {
             autoFocus
             className="mt-1.5 h-12 text-base tracking-[0.3em]"
           />
-          <button type="button" className="mt-1.5 text-xs text-sage-700 underline" onClick={() => window.location.reload()}>
+          <button type="button" className="mt-1.5 text-xs text-navy-700 underline" onClick={() => window.location.reload()}>
             Guna ID lain
           </button>
         </div>

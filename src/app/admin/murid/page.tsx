@@ -113,7 +113,7 @@ export default async function StudentsPage({ searchParams }: PageProps<"/admin/m
                   </td>
                   <td className={td}>{s._count.subjects}</td>
                   <td className={cn(td, "whitespace-nowrap")}>{formatDate(s.registrationDate)}</td>
-                  <td className={td}>{s.isActive ? <Badge tone="sage">Aktif</Badge> : <Badge tone="neutral">Tidak Aktif</Badge>}</td>
+                  <td className={td}>{s.isActive ? <Badge tone="success">Aktif</Badge> : <Badge tone="neutral">Tidak Aktif</Badge>}</td>
                 </tr>
               ))}
             </tbody>

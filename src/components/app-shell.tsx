@@ -104,7 +104,7 @@ export function AppShell({
               aria-current={active ? "page" : undefined}
               className={cn(
                 "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors",
-                active ? "bg-sage-600 font-medium text-white" : "text-ink-soft hover:bg-beige-100 hover:text-ink",
+                active ? "bg-navy-600 font-medium text-white" : "text-ink-soft hover:bg-beige-100 hover:text-ink",
               )}
             >
               <Icon className="size-[18px] shrink-0" />

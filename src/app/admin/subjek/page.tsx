@@ -45,7 +45,7 @@ export default async function SubjectsPage() {
                       <td className={td}>{s._count.students}</td>
                       <td className={td}>{s._count.tuitionExams}</td>
                       <td className={td}>{s._count.schoolResults}</td>
-                      <td className={td}>{s.isActive ? <Badge tone="sage">Aktif</Badge> : <Badge tone="neutral">Tidak Aktif</Badge>}</td>
+                      <td className={td}>{s.isActive ? <Badge tone="success">Aktif</Badge> : <Badge tone="neutral">Tidak Aktif</Badge>}</td>
                       <td className={td}>
                         <div className="flex justify-end gap-1.5">
                           <Modal trigger="Namakan Semula" triggerVariant="ghost" triggerSize="sm" title="Namakan Semula Subjek">

@@ -70,7 +70,7 @@ export function NavigationProgress() {
         active ? "opacity-100" : "opacity-0"
       }`}
     >
-      {active && <div className="nav-progress-bar h-full w-full rounded-full bg-sage-500" />}
+      {active && <div className="nav-progress-bar h-full w-full rounded-full bg-gold-500" />}
     </div>
   );
 }

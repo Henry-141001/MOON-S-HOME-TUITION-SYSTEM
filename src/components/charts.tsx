@@ -14,14 +14,15 @@ import {
 } from "recharts";
 
 // Muted series palette that sits well on cream/white.
-const SERIES = ["#5b7a59", "#b08d57", "#5f86a3", "#b36f60", "#8a7aa8", "#7fa79c", "#a3a35f", "#c08a9a"];
-const GRID = "#ece6da";
-const AXIS = "#8b948c";
+// Series palette from the logo: navy, antique gold, then muted companions.
+const SERIES = ["#1d4277", "#b0965c", "#5f86b8", "#b36f60", "#7d6ba8", "#4f8f88", "#9a8f4f", "#b97a95"];
+const GRID = "#ebe3d0";
+const AXIS = "#7a8293";
 
 const tooltipStyle = {
   borderRadius: 12,
-  border: "1px solid #e9e2d5",
-  boxShadow: "0 4px 16px rgb(45 56 48 / 0.08)",
+  border: "1px solid #e8e0cd",
+  boxShadow: "0 4px 16px rgb(16 37 72 / 0.08)",
   fontSize: 12,
 };
 
@@ -99,7 +100,7 @@ export function PercentBarChart({
           <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: AXIS }} tickLine={false} axisLine={false} unit="%" />
           <Tooltip
             contentStyle={tooltipStyle}
-            cursor={{ fill: "#f7f2e9" }}
+            cursor={{ fill: "#f8f2e3" }}
             formatter={(v) => (v === null || v === undefined ? "—" : `${Number(v).toFixed(1)}%`)}
           />
           {bars.length > 1 && <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" iconSize={8} />}
@@ -136,11 +137,11 @@ export function AttendanceChart({
           <CartesianGrid stroke={GRID} vertical={false} />
           <XAxis dataKey="label" tick={{ fontSize: 11, fill: AXIS }} tickLine={false} axisLine={{ stroke: GRID }} />
           <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: AXIS }} tickLine={false} axisLine={false} />
-          <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "#f7f2e9" }} />
+          <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "#f8f2e3" }} />
           <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" iconSize={8} />
-          <Bar dataKey="present" name="Hadir" stackId="a" fill="#6f8f6c" maxBarSize={36} />
-          <Bar dataKey="excused" name="Bersebab" stackId="a" fill="#d9b978" maxBarSize={36} />
-          <Bar dataKey="absent" name="Tidak Hadir" stackId="a" fill="#c98c7d" radius={[6, 6, 0, 0]} maxBarSize={36} />
+          <Bar dataKey="present" name="Hadir" stackId="a" fill="#4f8a64" maxBarSize={36} />
+          <Bar dataKey="excused" name="Bersebab" stackId="a" fill="#d2b46d" maxBarSize={36} />
+          <Bar dataKey="absent" name="Tidak Hadir" stackId="a" fill="#c98374" radius={[6, 6, 0, 0]} maxBarSize={36} />
         </BarChart>
       </ResponsiveContainer>
     </div>

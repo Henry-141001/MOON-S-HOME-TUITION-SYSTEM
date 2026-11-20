@@ -8,22 +8,22 @@ import { formatDate, formatLongDate, formatMonth, todayISO } from "@/lib/dates";
 const LOGO_SRC = { data: Buffer.from(LOGO_PNG_BASE64, "base64"), format: "png" as const };
 
 const C = {
-  sage: "#5b7a59",
-  sageLight: "#f0f4ee",
-  beige: "#f7f2e9",
-  beigeDark: "#b08d57",
-  ink: "#2d3830",
-  muted: "#7c867d",
-  line: "#e9e2d5",
+  navy: "#10335f",
+  navyLight: "#eef2f8",
+  beige: "#f8f2e3",
+  gold: "#b0965c",
+  ink: "#1d2737",
+  muted: "#7a8293",
+  line: "#e8e0cd",
 };
 
 const s = StyleSheet.create({
   page: { padding: 36, paddingBottom: 56, fontSize: 9.5, fontFamily: "Helvetica", color: C.ink, lineHeight: 1.4 },
-  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderBottom: `2pt solid ${C.sage}`, paddingBottom: 10 },
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderBottom: `2pt solid ${C.navy}`, paddingBottom: 10 },
   brandRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   brand: { fontSize: 14, fontFamily: "Helvetica-Bold", letterSpacing: 0.6 },
   small: { fontSize: 8, color: C.muted },
-  title: { fontSize: 12, fontFamily: "Helvetica-Bold", color: C.sage, textAlign: "right" },
+  title: { fontSize: 12, fontFamily: "Helvetica-Bold", color: C.navy, textAlign: "right" },
   infoGrid: { flexDirection: "row", flexWrap: "wrap", marginTop: 14 },
   infoCell: { width: "33.3%", marginBottom: 7, paddingRight: 8 },
   label: { fontSize: 7, color: C.muted, textTransform: "uppercase", letterSpacing: 0.5 },
@@ -32,7 +32,7 @@ const s = StyleSheet.create({
   box: { flex: 1, backgroundColor: C.beige, borderRadius: 6, padding: 8, border: `0.5pt solid ${C.line}` },
   boxValue: { fontSize: 15, fontFamily: "Helvetica-Bold", marginTop: 3, marginBottom: 4, lineHeight: 1.1 },
   section: { marginTop: 16 },
-  sectionTitle: { fontSize: 10.5, fontFamily: "Helvetica-Bold", color: C.sage, borderBottom: `0.75pt solid ${C.line}`, paddingBottom: 3, marginBottom: 6 },
+  sectionTitle: { fontSize: 10.5, fontFamily: "Helvetica-Bold", color: C.navy, borderBottom: `0.75pt solid ${C.line}`, paddingBottom: 3, marginBottom: 6 },
   table: { border: `0.5pt solid ${C.line}`, borderRadius: 4 },
   tr: { flexDirection: "row", borderBottom: `0.5pt solid ${C.line}` },
   th: { backgroundColor: C.beige, fontSize: 7.5, fontFamily: "Helvetica-Bold", color: C.muted, padding: 4, textTransform: "uppercase" },
@@ -41,7 +41,7 @@ const s = StyleSheet.create({
   barLabel: { width: 95, fontSize: 8.5 },
   barTrack: { flex: 1, height: 7, backgroundColor: C.beige, borderRadius: 3 },
   barValue: { width: 40, fontSize: 8, textAlign: "right" },
-  note: { backgroundColor: C.sageLight, borderRadius: 6, padding: 10 },
+  note: { backgroundColor: C.navyLight, borderRadius: 6, padding: 10 },
   footerText: { fontSize: 7.5, color: C.muted },
 });
 
@@ -165,8 +165,8 @@ export function ReportDocument({ r }: { r: StudentReport }) {
         <View style={s.section}>
           <Text style={s.sectionTitle}>1. Analisis Prestasi Akademik (purata mengikut subjek)</Text>
           <View style={{ flexDirection: "row", gap: 16 }}>
-            <Bars title="Ujian Tuisyen" color={C.sage} rows={r.tuitionBySubject} />
-            <Bars title="Peperiksaan Sekolah" color={C.beigeDark} rows={r.schoolBySubject} />
+            <Bars title="Ujian Tuisyen" color={C.navy} rows={r.tuitionBySubject} />
+            <Bars title="Peperiksaan Sekolah" color={C.gold} rows={r.schoolBySubject} />
           </View>
           {r.tuitionBySubject.length > 0 && (
             <View style={{ marginTop: 8 }}>
@@ -255,7 +255,7 @@ export function ReportDocument({ r }: { r: StudentReport }) {
             ["Ruang Penambahbaikan", r.comments.improvement],
           ].map(([title, items]) => (
             <View key={title as string} style={{ marginBottom: 6 }} wrap={false}>
-              <Text style={{ fontFamily: "Helvetica-Bold", color: C.sage, fontSize: 8.5 }}>{title as string}</Text>
+              <Text style={{ fontFamily: "Helvetica-Bold", color: C.navy, fontSize: 8.5 }}>{title as string}</Text>
               {(items as StudentReport["comments"]["strengths"]).length === 0 ? (
                 <Text style={s.small}>-</Text>
               ) : (
@@ -269,7 +269,7 @@ export function ReportDocument({ r }: { r: StudentReport }) {
           ))}
           {r.comments.other.map((c) => (
             <View key={c.id} style={{ marginBottom: 6 }} wrap={false}>
-              <Text style={{ fontFamily: "Helvetica-Bold", color: C.sage, fontSize: 8.5 }}>
+              <Text style={{ fontFamily: "Helvetica-Bold", color: C.navy, fontSize: 8.5 }}>
                 {COMMENT_LABELS[c.category]} <Text style={s.small}>({formatDate(c.commentDate)})</Text>
               </Text>
               <Text>{c.content}</Text>

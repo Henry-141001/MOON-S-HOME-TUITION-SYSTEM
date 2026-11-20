@@ -102,14 +102,14 @@ export default async function ParentsPage() {
                   </td>
                   <td className={td}>
                     {p.pinHash ? (
-                      <Badge tone="sage">
+                      <Badge tone="success">
                         <KeyRound className="size-3" /> ID + PIN
                       </Badge>
                     ) : (
                       <Badge tone="beige">ID sahaja</Badge>
                     )}
                   </td>
-                  <td className={td}>{p.isActive ? <Badge tone="sage">Aktif</Badge> : <Badge tone="neutral">Tidak Aktif</Badge>}</td>
+                  <td className={td}>{p.isActive ? <Badge tone="success">Aktif</Badge> : <Badge tone="neutral">Tidak Aktif</Badge>}</td>
                   <td className={cn(td, "text-right")}>
                     <div className="flex justify-end gap-2">
                       {viewer.readOnly && <ObserveParentButton action={observeParent.bind(null, p.id)} />}

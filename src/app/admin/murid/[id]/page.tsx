@@ -79,7 +79,7 @@ export default async function StudentProfilePage({ params, searchParams }: PageP
         description={
           <span className="inline-flex flex-wrap items-center gap-2">
             {student.studentCode} · {student.yearForm} · {student.school}
-            {student.isActive ? <Badge tone="sage">Aktif</Badge> : <Badge tone="neutral">Tidak Aktif</Badge>}
+            {student.isActive ? <Badge tone="success">Aktif</Badge> : <Badge tone="neutral">Tidak Aktif</Badge>}
             {student.isDemo && <DemoBadge />}
           </span>
         }
@@ -223,7 +223,7 @@ export default async function StudentProfilePage({ params, searchParams }: PageP
 
       {tab === "akademik" && (
         <div className="space-y-6">
-          <SectionTitle tone="sage" title="Keputusan Ujian Tuisyen" subtitle="Dimasukkan oleh guru" />
+          <SectionTitle tone="navy" title="Keputusan Ujian Tuisyen" subtitle="Dimasukkan oleh guru" />
           <Card>
             <CardHeader
               title={`${records.tuition.length} keputusan`}
@@ -236,7 +236,7 @@ export default async function StudentProfilePage({ params, searchParams }: PageP
             <TuitionResultsTable rows={records.tuition} />
           </Card>
 
-          <SectionTitle tone="beige" title="Keputusan Peperiksaan Sekolah" subtitle="Dihantar oleh ibu bapa" />
+          <SectionTitle tone="gold" title="Keputusan Peperiksaan Sekolah" subtitle="Dihantar oleh ibu bapa" />
           {records.school.length === 0 ? (
             <Card>
               <EmptyState title="Belum ada keputusan sekolah dihantar" />

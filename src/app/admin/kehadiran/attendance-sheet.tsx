@@ -11,7 +11,7 @@ type Status = "PRESENT" | "ABSENT" | "EXCUSED" | "";
 type Row = { id: string; code: string; name: string; isDemo: boolean; status: Status; note: string };
 
 const OPTIONS: { value: Exclude<Status, "">; label: string; on: string }[] = [
-  { value: "PRESENT", label: "Hadir", on: "bg-sage-600 text-white border-sage-600" },
+  { value: "PRESENT", label: "Hadir", on: "bg-success-ink text-white border-success-ink" },
   { value: "ABSENT", label: "Tidak Hadir", on: "bg-rose-ink text-white border-rose-ink" },
   { value: "EXCUSED", label: "Bersebab", on: "bg-amber-ink text-white border-amber-ink" },
 ];
@@ -51,7 +51,7 @@ export function AttendanceSheet({
           </button>
         </div>
         <p className="text-[13px] text-muted">
-          <span className="font-medium text-sage-700">{counts.present} hadir</span> ·{" "}
+          <span className="font-medium text-success-ink">{counts.present} hadir</span> ·{" "}
           <span className="font-medium text-rose-ink">{counts.absent} tidak hadir</span> ·{" "}
           <span className="font-medium text-amber-ink">{counts.excused} bersebab</span>
           {counts.blank > 0 && <> · {counts.blank} belum ditanda</>}

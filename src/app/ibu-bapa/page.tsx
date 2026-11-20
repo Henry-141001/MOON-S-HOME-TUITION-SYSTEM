@@ -42,7 +42,7 @@ export default async function ParentHome({ searchParams }: PageProps<"/ibu-bapa"
       {nextClass && (
         <section
           aria-label="Kelas seterusnya"
-          className="mb-6 overflow-hidden rounded-[var(--radius-card)] border border-sage-200 bg-sage-600 text-white shadow-[var(--shadow-soft)]"
+          className="mb-6 overflow-hidden rounded-[var(--radius-card)] border border-navy-200 bg-navy-600 text-white shadow-[var(--shadow-soft)]"
         >
           <div className="flex items-start gap-4 p-5">
             <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/15">
@@ -68,7 +68,7 @@ export default async function ParentHome({ searchParams }: PageProps<"/ibu-bapa"
             </div>
           </div>
           {laterClasses.length > 0 && (
-            <ul className="divide-y divide-white/10 border-t border-white/15 bg-sage-700/40">
+            <ul className="divide-y divide-white/10 border-t border-white/15 bg-navy-700/40">
               {laterClasses.map((c) => (
                 <li key={c.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 px-5 py-2.5 text-sm">
                   <span className="font-medium">
@@ -221,16 +221,16 @@ export default async function ParentHome({ searchParams }: PageProps<"/ibu-bapa"
       {/* E. Submit */}
       <Link
         href={withChild("/ibu-bapa/sekolah", child.id)}
-        className="mt-6 flex items-center gap-4 rounded-[var(--radius-card)] border border-sage-200 bg-sage-50 px-5 py-4 hover:bg-sage-100"
+        className="mt-6 flex items-center gap-4 rounded-[var(--radius-card)] border border-navy-200 bg-navy-50 px-5 py-4 hover:bg-navy-100"
       >
-        <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-sage-600 text-white">
+        <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-navy-600 text-white">
           <Send className="size-5" />
         </span>
         <span className="flex-1">
           <span className="block font-medium text-ink">Hantar Keputusan Peperiksaan Sekolah</span>
           <span className="text-sm text-ink-soft">Masukkan markah ujian atau peperiksaan sekolah anak anda.</span>
         </span>
-        <span className="text-sage-700">→</span>
+        <span className="text-navy-700">→</span>
       </Link>
     </>
   );

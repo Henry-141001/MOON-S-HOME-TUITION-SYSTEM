@@ -60,7 +60,7 @@ export default async function CommentsPage({ searchParams }: PageProps<"/admin/u
                   aria-current={s.id === selected?.id ? "true" : undefined}
                   className={cn(
                     "flex items-center gap-3 px-4 py-2.5 hover:bg-beige-50 active:bg-beige-100",
-                    s.id === selected?.id && "bg-sage-50 shadow-[inset_3px_0_0_var(--color-sage-600)]",
+                    s.id === selected?.id && "bg-navy-50 shadow-[inset_3px_0_0_var(--color-navy-600)]",
                   )}
                 >
                   <StudentAvatar studentId={s.id} name={s.fullName} photoVersion={s.photo?.updatedAt} size={32} />
@@ -152,7 +152,7 @@ export default async function CommentsPage({ searchParams }: PageProps<"/admin/u
                             {formatDate(c.commentDate)}
                           </span>
                         </div>
-                        <p className="mt-0.5 text-xs font-medium text-sage-700">{COMMENT_LABELS[c.category]}</p>
+                        <p className="mt-0.5 text-xs font-medium text-navy-700">{COMMENT_LABELS[c.category]}</p>
                         <p className="mt-1 line-clamp-2 text-sm text-ink-soft">{c.content}</p>
                       </div>
                       <RowChevron />

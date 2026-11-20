@@ -130,7 +130,7 @@ function FormMessage({ state, showSuccess }: { state: ActionState; showSuccess: 
       role={isError ? "alert" : "status"}
       className={cn(
         "mt-4 flex items-start gap-2 rounded-xl px-3.5 py-2.5 text-sm",
-        isError ? "bg-rose-soft text-rose-ink" : "bg-sage-50 text-sage-700",
+        isError ? "bg-rose-soft text-rose-ink" : "bg-success-soft text-success-ink",
       )}
     >
       {isError ? <AlertCircle className="mt-0.5 size-4 shrink-0" /> : <CheckCircle2 className="mt-0.5 size-4 shrink-0" />}

@@ -34,7 +34,7 @@ export default async function TakeAttendancePage({ searchParams }: PageProps<"/a
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-muted">Tarikh sesi</p>
             <p className="font-display text-lg font-semibold text-ink">{formatLongDate(date)}</p>
-            {date === today && <p className="text-xs text-sage-700">Hari ini</p>}
+            {date === today && <p className="text-xs text-navy-700">Hari ini</p>}
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Link href={`/admin/kehadiran?tarikh=${addDaysISO(date, -1)}`} className={buttonClass("secondary", "sm")} aria-label="Hari sebelumnya">

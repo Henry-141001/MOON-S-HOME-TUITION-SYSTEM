@@ -41,7 +41,7 @@ export default async function StudentReportPage({ params }: PageProps<"/admin/la
 
       <article className="print-full mx-auto max-w-4xl rounded-[var(--radius-card)] border border-line bg-surface p-6 shadow-[var(--shadow-soft)] sm:p-10">
         {/* Letterhead */}
-        <header className="flex flex-wrap items-start justify-between gap-4 border-b-2 border-sage-600 pb-5">
+        <header className="flex flex-wrap items-start justify-between gap-4 border-b-2 border-navy-600 pb-5">
           <div className="flex items-center gap-3">
             <BrandMark size={64} />
             <div>
@@ -53,7 +53,7 @@ export default async function StudentReportPage({ params }: PageProps<"/admin/la
             </div>
           </div>
           <div className="text-right">
-            <p className="font-display text-lg font-semibold text-sage-700">Laporan Prestasi Murid</p>
+            <p className="font-display text-lg font-semibold text-navy-700">Laporan Prestasi Murid</p>
             <p className="text-xs text-muted">Dijana pada {formatLongDate(todayISO())}</p>
           </div>
         </header>
@@ -209,7 +209,7 @@ export default async function StudentReportPage({ params }: PageProps<"/admin/la
             <div className="mt-3 space-y-2">
               {r.comments.other.map((c) => (
                 <div key={c.id} className="print-break-avoid rounded-xl border border-line px-4 py-3">
-                  <p className="text-xs font-semibold text-sage-700">
+                  <p className="text-xs font-semibold text-navy-700">
                     {COMMENT_LABELS[c.category]} <span className="font-normal text-muted">· {formatDate(c.commentDate)}</span>
                   </p>
                   <p className="mt-1 whitespace-pre-line text-sm">{c.content}</p>
@@ -220,7 +220,7 @@ export default async function StudentReportPage({ params }: PageProps<"/admin/la
         </ReportSection>
 
         <ReportSection title="6. Cadangan Penambahbaikan">
-          <div className="print-break-avoid rounded-xl bg-sage-50 px-5 py-4">
+          <div className="print-break-avoid rounded-xl bg-navy-50 px-5 py-4">
             {r.comments.recommendations.length === 0 && r.autoNotes.length === 0 ? (
               <p className="text-sm text-ink-soft">Teruskan usaha yang baik. Tiada cadangan khusus pada masa ini.</p>
             ) : (
@@ -274,7 +274,7 @@ function Summary({ label, value, sub }: { label: string; value: string; sub: str
 function ReportSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mt-8">
-      <h2 className="mb-3 border-b border-line pb-1.5 font-display text-base font-semibold text-sage-700">{title}</h2>
+      <h2 className="mb-3 border-b border-line pb-1.5 font-display text-base font-semibold text-navy-700">{title}</h2>
       {children}
     </section>
   );
@@ -321,7 +321,7 @@ function PerfTable({ title, rows }: { title: string; rows: { subject: string; av
 function CommentBlock({ title, items }: { title: string; items: { id: string; content: string; commentDate: string }[] }) {
   return (
     <div className="print-break-avoid rounded-xl border border-line px-4 py-3">
-      <p className="text-xs font-semibold text-sage-700">{title}</p>
+      <p className="text-xs font-semibold text-navy-700">{title}</p>
       {items.length === 0 ? (
         <p className="mt-1 text-sm text-muted">—</p>
       ) : (

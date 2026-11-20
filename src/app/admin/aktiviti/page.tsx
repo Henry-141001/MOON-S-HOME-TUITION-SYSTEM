@@ -10,7 +10,7 @@ import type { Role } from "@/generated/prisma/enums";
 export const metadata = { title: "Log Aktiviti" };
 
 const ROLE_LABEL: Record<Role, string> = { ADMIN: "Admin", PARENT: "Ibu Bapa", SUPER_ADMIN: "Pemerhati" };
-const ROLE_TONE: Record<Role, Tone> = { ADMIN: "sage", PARENT: "beige", SUPER_ADMIN: "sky" };
+const ROLE_TONE: Record<Role, Tone> = { ADMIN: "navy", PARENT: "gold", SUPER_ADMIN: "sky" };
 const PAGE_SIZE = 100;
 
 /** Start/end of a Malaysia calendar day as UTC instants. */

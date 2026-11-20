@@ -35,7 +35,7 @@ export function CommentForm({
       </Field>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <label className="flex cursor-pointer items-center gap-2 text-sm text-ink-soft">
-          <input type="checkbox" name="isPublished" defaultChecked={defaults.isPublished ?? true} className="size-4 accent-sage-600" />
+          <input type="checkbox" name="isPublished" defaultChecked={defaults.isPublished ?? true} className="size-4 accent-navy-600" />
           Terbitkan kepada ibu bapa
         </label>
         <SubmitButton>{submitLabel}</SubmitButton>

@@ -26,11 +26,11 @@ export function buttonClass(variant: Variant = "primary", size: Size = "md", ext
     size === "sm" && "h-9 px-3.5 text-[13px] sm:h-8 sm:px-3",
     size === "md" && "h-11 px-4 text-sm sm:h-10",
     size === "lg" && "h-12 px-6 text-base",
-    variant === "primary" && "bg-sage-600 text-white shadow-sm hover:bg-sage-700 active:bg-sage-800",
+    variant === "primary" && "bg-navy-600 text-white shadow-sm hover:bg-navy-700 active:bg-navy-800",
     variant === "secondary" && "border border-beige-300 bg-surface text-ink shadow-sm hover:bg-beige-50 active:bg-beige-100",
-    variant === "soft" && "border border-sage-200 bg-sage-50 text-sage-700 hover:bg-sage-100 active:bg-sage-200",
+    variant === "soft" && "border border-navy-200 bg-navy-50 text-navy-700 hover:bg-navy-100 active:bg-navy-200",
     // "ghost" = small secondary action: outlined sage pill (never plain text).
-    variant === "ghost" && "border border-sage-200 bg-surface text-sage-700 hover:bg-sage-50 active:bg-sage-100",
+    variant === "ghost" && "border border-navy-200 bg-surface text-navy-700 hover:bg-navy-50 active:bg-navy-100",
     variant === "danger" && "border border-rose-ink/30 bg-surface text-rose-ink hover:bg-rose-soft active:bg-rose-soft",
     extra,
   );
@@ -38,7 +38,7 @@ export function buttonClass(variant: Variant = "primary", size: Size = "md", ext
 
 /** Inline text link that is visibly a link without hover (underlined, sage). */
 export const linkClass =
-  "font-medium text-sage-700 underline decoration-sage-300 decoration-1 underline-offset-4 hover:text-sage-800 hover:decoration-sage-600 active:text-sage-800";
+  "font-medium text-navy-700 underline decoration-navy-300 decoration-1 underline-offset-4 hover:text-navy-800 hover:decoration-navy-600 active:text-navy-800";
 
 export function ButtonLink({
   variant,
@@ -58,7 +58,7 @@ export function ButtonLink({
 
 /** Chevron shown at the end of a tappable row. */
 export function RowChevron() {
-  return <ChevronRight className="size-4 shrink-0 text-sage-500" aria-hidden="true" />;
+  return <ChevronRight className="size-4 shrink-0 text-navy-500" aria-hidden="true" />;
 }
 
 // ───────── Layout ─────────
@@ -108,7 +108,7 @@ export function CardHeader({
   return (
     <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line px-5 py-4">
       <div className="flex min-w-0 items-center gap-3">
-        {icon && <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-sage-50 text-sage-700">{icon}</span>}
+        {icon && <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-navy-50 text-navy-700">{icon}</span>}
         <div className="min-w-0">
           <h2 className="text-[15px] font-semibold text-ink">{title}</h2>
           {description && <p className="mt-0.5 text-[13px] text-muted">{description}</p>}
@@ -128,16 +128,16 @@ export function StatCard({
   value,
   hint,
   icon,
-  tone = "sage",
+  tone = "navy",
 }: {
   label: string;
   value: ReactNode;
   hint?: ReactNode;
   icon?: ReactNode;
-  tone?: "sage" | "beige" | "rose" | "amber" | "sky";
+  tone?: "navy" | "beige" | "rose" | "amber" | "sky";
 }) {
   const toneClass = {
-    sage: "bg-sage-50 text-sage-700",
+    navy: "bg-navy-50 text-navy-700",
     beige: "bg-beige-100 text-ink-soft",
     rose: "bg-rose-soft text-rose-ink",
     amber: "bg-amber-soft text-amber-ink",
@@ -177,7 +177,7 @@ export function tabPillClass(active: boolean) {
   return cn(
     "inline-flex h-9 select-none items-center whitespace-nowrap rounded-full px-4 text-sm transition-[background-color,color,transform] duration-150 active:scale-[0.97]",
     active
-      ? "bg-sage-600 font-medium text-white shadow-sm"
+      ? "bg-navy-600 font-medium text-white shadow-sm"
       : "border border-beige-300 bg-surface text-ink-soft hover:bg-beige-50 active:bg-beige-100",
   );
 }
@@ -196,11 +196,13 @@ export function TabLinks({ items }: { items: { href: string; label: string; acti
 
 // ───────── Badges ─────────
 
-export type Tone = "sage" | "beige" | "rose" | "amber" | "sky" | "neutral";
+export type Tone = "success" | "navy" | "beige" | "gold" | "rose" | "amber" | "sky" | "neutral";
 
 export function Badge({ tone = "neutral", children, className }: { tone?: Tone; children: ReactNode; className?: string }) {
   const toneClass = {
-    sage: "bg-sage-50 text-sage-700 ring-sage-200",
+    success: "bg-success-soft text-success-ink ring-success-ring",
+    navy: "bg-navy-50 text-navy-700 ring-navy-200",
+    gold: "bg-gold-100 text-gold-600 ring-gold-300",
     beige: "bg-beige-100 text-ink-soft ring-beige-200",
     rose: "bg-rose-soft text-rose-ink ring-rose-soft",
     amber: "bg-amber-soft text-amber-ink ring-amber-soft",
@@ -220,8 +222,8 @@ export function Badge({ tone = "neutral", children, className }: { tone?: Tone; 
   );
 }
 
-export const attendanceTone: Record<string, Tone> = { PRESENT: "sage", ABSENT: "rose", EXCUSED: "amber" };
-export const submissionTone: Record<string, Tone> = { PENDING: "amber", APPROVED: "sage", NEEDS_CORRECTION: "rose" };
+export const attendanceTone: Record<string, Tone> = { PRESENT: "success", ABSENT: "rose", EXCUSED: "amber" };
+export const submissionTone: Record<string, Tone> = { PENDING: "amber", APPROVED: "success", NEEDS_CORRECTION: "rose" };
 
 export function DemoBadge() {
   return <Badge tone="sky">Demo</Badge>;
@@ -229,13 +231,13 @@ export function DemoBadge() {
 
 export function PercentPill({ value }: { value: number | null | undefined }) {
   if (value === null || value === undefined) return <span className="text-muted">—</span>;
-  const tone: Tone = value >= 80 ? "sage" : value >= 50 ? "beige" : value >= 40 ? "amber" : "rose";
+  const tone: Tone = value >= 80 ? "success" : value >= 50 ? "beige" : value >= 40 ? "amber" : "rose";
   return <Badge tone={tone}>{value.toFixed(1)}%</Badge>;
 }
 
 export function TrendText({ change }: { change: number | null }) {
   if (change === null) return <span className="text-xs text-muted">Tiada perbandingan</span>;
-  if (change > 0) return <span className="text-xs font-medium text-sage-700">▲ +{change.toFixed(1)}%</span>;
+  if (change > 0) return <span className="text-xs font-medium text-success-ink">▲ +{change.toFixed(1)}%</span>;
   if (change < 0) return <span className="text-xs font-medium text-rose-ink">▼ {change.toFixed(1)}%</span>;
   return <span className="text-xs text-muted">● Tiada perubahan</span>;
 }
@@ -256,7 +258,7 @@ export const td = "border-b border-line px-4 py-3 align-middle text-ink";
 
 export const inputClass =
   // 16px text on phones: iOS Safari zooms the page in when a field with smaller text is tapped.
-  "block w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-base sm:text-sm text-ink placeholder:text-muted/70 transition-colors hover:border-beige-300 focus:border-sage-400 focus:outline-none focus:ring-4 focus:ring-sage-100 disabled:bg-beige-50 disabled:text-muted";
+  "block w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-base sm:text-sm text-ink placeholder:text-muted/70 transition-colors hover:border-beige-300 focus:border-navy-400 focus:outline-none focus:ring-4 focus:ring-navy-100 disabled:bg-beige-50 disabled:text-muted";
 
 export function Input(props: ComponentProps<"input">) {
   return <input {...props} className={cn(inputClass, props.className)} />;

@@ -51,14 +51,14 @@ export function ParentForm({
         ) : (
           <div className="mt-2 max-h-72 space-y-1.5 overflow-y-auto rounded-2xl border border-line p-2">
             {students.map((s) => (
-              <div key={s.id} className="flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-beige-50 has-checked:bg-sage-50">
+              <div key={s.id} className="flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-beige-50 has-checked:bg-navy-50">
                 <label className="flex flex-1 cursor-pointer items-center gap-2.5 text-sm">
                   <input
                     type="checkbox"
                     name="childIds"
                     value={s.id}
                     defaultChecked={linked.has(s.id)}
-                    className="size-4 accent-sage-600"
+                    className="size-4 accent-navy-600"
                   />
                   <span className="min-w-0">
                     <span className="font-medium text-ink">{s.fullName}</span>

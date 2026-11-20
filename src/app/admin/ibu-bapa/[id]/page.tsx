@@ -46,7 +46,7 @@ export default async function ParentDetailPage({ params }: PageProps<"/admin/ibu
         description={
           <span className="inline-flex flex-wrap items-center gap-2">
             Akaun ibu bapa
-            {parent.isActive ? <Badge tone="sage">Aktif</Badge> : <Badge tone="neutral">Tidak Aktif</Badge>}
+            {parent.isActive ? <Badge tone="success">Aktif</Badge> : <Badge tone="neutral">Tidak Aktif</Badge>}
             {parent.isDemo && <DemoBadge />}
           </span>
         }
@@ -110,7 +110,7 @@ export default async function ParentDetailPage({ params }: PageProps<"/admin/ibu
             <CardBody className="space-y-3">
               <p className="text-sm">
                 Status:{" "}
-                {parent.pinHash ? <Badge tone="sage">PIN aktif</Badge> : <Badge tone="beige">Tiada PIN (ID sahaja)</Badge>}
+                {parent.pinHash ? <Badge tone="success">PIN aktif</Badge> : <Badge tone="beige">Tiada PIN (ID sahaja)</Badge>}
               </p>
               <ActionForm action={setParentPin.bind(null, parent.id)} resetOnSuccess className="space-y-3">
                 <Field label={parent.pinHash ? "Tukar PIN" : "Tetapkan PIN"} name="pin" hint="4–8 digit nombor">

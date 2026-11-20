@@ -35,7 +35,7 @@ export function ExamForm({
           <Input id="date" name="date" type="date" defaultValue={defaults.date} required />
         </Field>
       </div>
-      <p className="rounded-xl bg-sage-50 px-3.5 py-2.5 text-[13px] text-sage-700">
+      <p className="rounded-xl bg-navy-50 px-3.5 py-2.5 text-[13px] text-navy-700">
         Markah setiap murid dimasukkan dalam <strong>peratus (0–100%)</strong>.
       </p>
       <Field label="Catatan (pilihan)" name="remarks">

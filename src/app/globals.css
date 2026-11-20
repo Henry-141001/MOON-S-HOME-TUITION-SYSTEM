@@ -1,42 +1,55 @@
 @import "tailwindcss";
 
-/* Moons Home Tutor — soft pastel palette: warm cream, muted sage, light beige. */
+/* Moons Home Tutor — colours taken from the logo: deep navy, antique gold, warm cream. */
 @theme {
-  --color-cream: #faf7f1;
+  --color-cream: #faf6ec;
   --color-surface: #ffffff;
 
-  --color-beige-50: #f7f2e9;
-  --color-beige-100: #efe7d8;
-  --color-beige-200: #e4d8c3;
-  --color-beige-300: #d3c3a6;
+  /* Warm cream / parchment (backgrounds, borders, soft fills) */
+  --color-beige-50: #f8f2e3;
+  --color-beige-100: #f1e8d3;
+  --color-beige-200: #e6d9b9;
+  --color-beige-300: #d2be92;
 
-  --color-sage-50: #f0f4ee;
-  --color-sage-100: #e0e9dd;
-  --color-sage-200: #c6d6c2;
-  --color-sage-300: #a8bfa4;
-  --color-sage-400: #8aa786;
-  --color-sage-500: #6f8f6c;
-  --color-sage-600: #5b7a59;
-  --color-sage-700: #4a6349;
-  --color-sage-800: #3a4e3a;
+  /* Navy — main brand colour (logo navy ≈ #0a3060) */
+  --color-navy-50: #eef2f8;
+  --color-navy-100: #dde5f1;
+  --color-navy-200: #bfcde3;
+  --color-navy-300: #93aacd;
+  --color-navy-400: #6382b3;
+  --color-navy-500: #3d5f94;
+  --color-navy-600: #1d4277;
+  --color-navy-700: #10335f;
+  --color-navy-800: #0a2548;
 
-  --color-ink: #2d3830;
-  --color-ink-soft: #536056;
-  --color-muted: #7c867d;
-  --color-line: #e9e2d5;
+  /* Antique gold — accent (logo gold ≈ #b4a070) */
+  --color-gold-100: #f4ecd9;
+  --color-gold-300: #d8c48f;
+  --color-gold-400: #c4ab6f;
+  --color-gold-500: #b0965c;
+  --color-gold-600: #8f7843;
 
-  --color-rose-soft: #f6e4df;
-  --color-rose-ink: #a35a49;
-  --color-amber-soft: #f7ecd6;
-  --color-amber-ink: #94702c;
-  --color-sky-soft: #e3ecf2;
-  --color-sky-ink: #4b6a82;
+  --color-ink: #1d2737;
+  --color-ink-soft: #4a5468;
+  --color-muted: #7a8293;
+  --color-line: #e8e0cd;
+
+  /* Status colours (kept separate from the brand so "good / bad" stays obvious) */
+  --color-success-soft: #e3f1e7;
+  --color-success-ink: #2e6b45;
+  --color-success-ring: #c3e0cc;
+  --color-rose-soft: #f7e3df;
+  --color-rose-ink: #a34a3c;
+  --color-amber-soft: #f6ecd3;
+  --color-amber-ink: #8a6420;
+  --color-sky-soft: #e2ebf6;
+  --color-sky-ink: #2f5486;
 
   --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
 
   --radius-card: 1.25rem;
-  --shadow-soft: 0 1px 2px rgb(45 56 48 / 0.04), 0 4px 16px rgb(45 56 48 / 0.05);
+  --shadow-soft: 0 1px 2px rgb(16 37 72 / 0.04), 0 4px 16px rgb(16 37 72 / 0.06);
 }
 
 html {
@@ -87,7 +100,7 @@ body {
 
 /* Consistent focus ring for keyboard users. */
 :focus-visible {
-  outline: 2px solid var(--color-sage-500);
+  outline: 2px solid var(--color-navy-500);
   outline-offset: 2px;
 }
 
@@ -97,7 +110,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 dialog::backdrop {
-  background: rgb(45 56 48 / 0.35);
+  background: rgb(10 37 72 / 0.4);
   backdrop-filter: blur(2px);
 }
 

@@ -128,7 +128,7 @@ export function SchoolExamForm({
                     </div>
                     <FieldError name={`marks_${r.key}`} />
                   </div>
-                  <div className="flex h-10 min-w-16 items-center justify-center text-sm font-semibold text-sage-700" aria-live="polite">
+                  <div className="flex h-10 min-w-16 items-center justify-center text-sm font-semibold text-navy-700" aria-live="polite">
                     {pct === null ? <span className="font-normal text-muted">Gred –</span> : `Gred ${gradeFor(pct).grade}`}
                   </div>
                   <button

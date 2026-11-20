@@ -70,9 +70,9 @@ export function StudentForm({
             {visibleSubjects.map((s) => (
               <label
                 key={s.id}
-                className="flex cursor-pointer items-center gap-2.5 rounded-xl border border-line px-3 py-2 text-sm hover:bg-beige-50 has-checked:border-sage-300 has-checked:bg-sage-50"
+                className="flex cursor-pointer items-center gap-2.5 rounded-xl border border-line px-3 py-2 text-sm hover:bg-beige-50 has-checked:border-navy-300 has-checked:bg-navy-50"
               >
-                <input type="checkbox" name="subjectIds" value={s.id} defaultChecked={selected.has(s.id)} className="size-4 accent-sage-600" />
+                <input type="checkbox" name="subjectIds" value={s.id} defaultChecked={selected.has(s.id)} className="size-4 accent-navy-600" />
                 {s.name}
               </label>
             ))}

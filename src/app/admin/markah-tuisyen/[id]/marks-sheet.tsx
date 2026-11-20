@@ -66,7 +66,7 @@ export function MarksSheet({
                 {!valid ? (
                   <span className="text-sm text-muted">—</span>
                 ) : (
-                  <Badge tone={value >= 80 ? "sage" : value >= 50 ? "beige" : value >= 40 ? "amber" : "rose"}>
+                  <Badge tone={value >= 80 ? "success" : value >= 50 ? "beige" : value >= 40 ? "amber" : "rose"}>
                     Gred {gradeFor(value).grade}
                   </Badge>
                 )}

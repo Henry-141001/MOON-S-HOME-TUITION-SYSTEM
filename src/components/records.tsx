@@ -58,7 +58,7 @@ export function StudentAvatar({
     .join("");
   return (
     <span
-      className="grid shrink-0 place-items-center rounded-2xl bg-sage-100 font-semibold text-sage-700"
+      className="grid shrink-0 place-items-center rounded-2xl bg-navy-100 font-semibold text-navy-700"
       style={{ width: size, height: size, fontSize: size * 0.34 }}
       aria-hidden="true"
     >
@@ -314,7 +314,7 @@ export function PerformanceAnalysis({ records }: { records: StudentRecords }) {
           value={records.tuitionOverall}
           count={records.tuition.length}
           unit="ujian"
-          tone="sage"
+          tone="navy"
         />
         <OverallBox
           title="Purata Keseluruhan — Peperiksaan Sekolah"
@@ -328,7 +328,7 @@ export function PerformanceAnalysis({ records }: { records: StudentRecords }) {
       <Card>
         <CardHeader
           title="Perbandingan Purata Mengikut Subjek"
-          description="Bar hijau = ujian tuisyen, bar coklat = peperiksaan sekolah. Kedua-duanya dikira berasingan."
+          description="Bar biru = ujian tuisyen, bar emas = peperiksaan sekolah. Kedua-duanya dikira berasingan."
         />
         <CardBody>
           <PercentBarChart
@@ -341,7 +341,7 @@ export function PerformanceAnalysis({ records }: { records: StudentRecords }) {
         </CardBody>
       </Card>
 
-      <SectionTitle tone="sage" title="A. Ujian Tuisyen" subtitle="Markah dimasukkan oleh guru tuisyen" />
+      <SectionTitle tone="navy" title="A. Ujian Tuisyen" subtitle="Markah dimasukkan oleh guru tuisyen" />
       <div className="grid gap-6 xl:grid-cols-2">
         <Card>
           <CardHeader title="Perkembangan Ujian Tuisyen" description="Peratus markah mengikut tarikh ujian" />
@@ -355,7 +355,7 @@ export function PerformanceAnalysis({ records }: { records: StudentRecords }) {
         </Card>
       </div>
 
-      <SectionTitle tone="beige" title="B. Peperiksaan Sekolah" subtitle="Keputusan dihantar oleh ibu bapa" />
+      <SectionTitle tone="gold" title="B. Peperiksaan Sekolah" subtitle="Keputusan dihantar oleh ibu bapa" />
       <div className="grid gap-6 xl:grid-cols-2">
         <Card>
           <CardHeader title="Perkembangan Peperiksaan Sekolah" description="Peratus markah mengikut peperiksaan" />
@@ -386,11 +386,11 @@ function OverallBox({
   value: number | null;
   count: number;
   unit: string;
-  tone: "sage" | "beige";
+  tone: "navy" | "beige";
 }) {
   const g = value === null ? null : gradeFor(value);
   return (
-    <div className={cn("rounded-[var(--radius-card)] border p-5", tone === "sage" ? "border-sage-200 bg-sage-50" : "border-beige-200 bg-beige-50")}>
+    <div className={cn("rounded-[var(--radius-card)] border p-5", tone === "navy" ? "border-navy-200 bg-navy-50" : "border-gold-300 bg-gold-100")}>
       <p className="text-[13px] font-medium text-ink-soft">{title}</p>
       <div className="mt-2 flex items-end gap-3">
         <p className="text-3xl font-semibold tracking-tight text-ink">{value === null ? "—" : `${value.toFixed(1)}%`}</p>
@@ -403,10 +403,10 @@ function OverallBox({
   );
 }
 
-export function SectionTitle({ title, subtitle, tone }: { title: string; subtitle?: string; tone: "sage" | "beige" }) {
+export function SectionTitle({ title, subtitle, tone }: { title: string; subtitle?: string; tone: "navy" | "gold" }) {
   return (
     <div className="flex items-center gap-3 pt-2">
-      <span className={cn("h-6 w-1.5 rounded-full", tone === "sage" ? "bg-sage-500" : "bg-beige-300")} />
+      <span className={cn("h-6 w-1.5 rounded-full", tone === "navy" ? "bg-navy-600" : "bg-gold-400")} />
       <div>
         <h2 className="font-display text-lg font-semibold text-ink">{title}</h2>
         {subtitle && <p className="text-xs text-muted">{subtitle}</p>}
@@ -464,7 +464,7 @@ export function LatestCommentsByCategory({
       {latest.map((c) => (
         <div key={c.id} className="rounded-2xl border border-line bg-beige-50/50 p-4">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-[13px] font-semibold text-sage-700">{COMMENT_LABELS[c.category]}</p>
+            <p className="text-[13px] font-semibold text-navy-700">{COMMENT_LABELS[c.category]}</p>
             <time className="text-xs text-muted">{formatDate(c.commentDate)}</time>
           </div>
           <p className="mt-1.5 whitespace-pre-line text-sm leading-relaxed text-ink">{c.content}</p>
@@ -477,7 +477,7 @@ export function LatestCommentsByCategory({
 function categoryTone(category: string) {
   switch (category) {
     case "STRENGTHS":
-      return "sage" as const;
+      return "success" as const;
     case "IMPROVEMENT":
       return "amber" as const;
     case "RECOMMENDATIONS":

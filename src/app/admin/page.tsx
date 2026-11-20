@@ -139,7 +139,7 @@ export default async function AdminDashboard() {
           label="Hadir Hari Ini"
           value={todayCounts.present}
           icon={<CalendarCheck className="size-5" />}
-          tone="sage"
+          tone="navy"
           hint={todayCounts.total === 0 ? "Kehadiran hari ini belum direkod" : `daripada ${todayCounts.total} direkod`}
         />
         <StatCard
@@ -314,7 +314,7 @@ export default async function AdminDashboard() {
                         <p className="truncate text-sm font-medium text-ink">{c.student.fullName}</p>
                         <span className="shrink-0 text-xs text-muted">{formatDate(c.commentDate)}</span>
                       </div>
-                      <p className="mt-0.5 text-xs font-medium text-sage-700">{COMMENT_LABELS[c.category]}</p>
+                      <p className="mt-0.5 text-xs font-medium text-navy-700">{COMMENT_LABELS[c.category]}</p>
                       <p className="mt-1 line-clamp-2 text-sm text-ink-soft">{c.content}</p>
                     </div>
                     <RowChevron />
