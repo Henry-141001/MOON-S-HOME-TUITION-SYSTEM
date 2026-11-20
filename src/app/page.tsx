@@ -23,15 +23,13 @@ export default async function LoginPage({ searchParams }: PageProps<"/">) {
       <section className="relative hidden overflow-hidden bg-navy-700 p-12 text-beige-50 lg:flex lg:flex-col lg:justify-between">
         <div className="absolute -right-24 -top-24 size-96 rounded-full bg-navy-600/60" />
         <div className="absolute -bottom-32 -left-20 size-[28rem] rounded-full bg-navy-800/50" />
-        <div className="relative flex items-center gap-3">
-          <BrandMark size={52} priority className="ring-2 ring-gold-300/60" />
-          <div className="leading-tight">
-            <p className="font-display text-lg font-semibold tracking-wide">MOONS HOME TUTOR</p>
-            <p className="text-xs tracking-wide text-beige-100/75">{BRAND_TAGLINE}</p>
-          </div>
+        {/* Name only — the large badge below is the one logo on this panel. */}
+        <div className="relative leading-tight">
+          <p className="font-display text-lg font-semibold tracking-wide">MOONS HOME TUTOR</p>
+          <p className="text-xs tracking-wide text-beige-100/75">{BRAND_TAGLINE}</p>
         </div>
         <div className="relative max-w-md">
-          <BrandMark size={150} className="mb-8 ring-4 ring-gold-300/50" />
+          <BrandMark size={150} priority className="mb-8 ring-4 ring-gold-400" />
           <h1 className="font-display text-4xl font-semibold leading-tight">{HEADLINE}</h1>
           <p className="mt-4 text-[15px] leading-relaxed text-beige-100/85">
             Kehadiran, markah ujian tuisyen, keputusan peperiksaan sekolah dan ulasan guru, semuanya di satu tempat.
