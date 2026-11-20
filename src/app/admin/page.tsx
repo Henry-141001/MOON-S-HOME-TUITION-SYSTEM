@@ -71,7 +71,7 @@ export default async function AdminDashboard() {
         where: { date: { gte: todayDate } },
         orderBy: [{ date: "asc" }, { startTime: "asc" }],
         take: 5,
-        include: { subject: { select: { name: true } } },
+        include: { subjects: { select: { subject: { select: { name: true } } } } },
       }),
       prisma.teacherComment.findMany({
         where: activeStudent,
@@ -244,7 +244,7 @@ export default async function AdminDashboard() {
                     <p className="truncate text-sm font-medium text-ink">{s.title}</p>
                     <p className="text-xs text-muted">
                       {s.startTime}–{s.endTime}
-                      {s.subject ? ` · ${s.subject.name}` : ""}
+                      {s.subjects.length ? ` · ${s.subjects.map((x) => x.subject.name).join(", ")}` : ""}
                     </p>
                   </div>
                 </li>

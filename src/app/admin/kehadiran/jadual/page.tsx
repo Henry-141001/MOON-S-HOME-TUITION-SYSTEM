@@ -3,7 +3,7 @@ import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdminView } from "@/lib/session";
 import { formatLongDate, parseISODate, todayISO, toISODate } from "@/lib/dates";
-import { Card, CardHeader, EmptyState, Input, Select, Table, Textarea, buttonClass, cn, td, th } from "@/components/ui";
+import { Badge, Card, CardHeader, EmptyState, Input, Table, Textarea, buttonClass, cn, td, th } from "@/components/ui";
 import { ActionForm, ConfirmButton, Field, InlineAction, Modal, SubmitButton } from "@/components/forms";
 import { createTuitionSession, deleteTuitionSession, updateTuitionSession } from "@/app/admin/_actions/attendance";
 import type { ActionState } from "@/lib/action-state";
@@ -17,13 +17,13 @@ export default async function SchedulePage() {
     prisma.tuitionSession.findMany({
       where: { date: { gte: today } },
       orderBy: [{ date: "asc" }, { startTime: "asc" }],
-      include: { subject: true },
+      include: { subjects: { include: { subject: { select: { id: true, name: true } } }, orderBy: { subject: { name: "asc" } } } },
     }),
     prisma.tuitionSession.findMany({
       where: { date: { lt: today } },
       orderBy: [{ date: "desc" }, { startTime: "desc" }],
       take: 20,
-      include: { subject: true },
+      include: { subjects: { include: { subject: { select: { id: true, name: true } } }, orderBy: { subject: { name: "asc" } } } },
     }),
     prisma.subject.findMany({ where: { isActive: true }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
   ]);
@@ -33,7 +33,7 @@ export default async function SchedulePage() {
       <Card>
         <CardHeader
           title="Sesi Akan Datang"
-          description="Dipaparkan di dashboard admin."
+          description="Dipaparkan di dashboard admin dan sebagai peringatan kepada ibu bapa."
           actions={
             <Modal
               trigger={
@@ -64,10 +64,9 @@ type SessionRow = {
   startTime: string;
   endTime: string;
   title: string;
-  subjectId: string | null;
   notes: string | null;
   isDemo: boolean;
-  subject: { name: string } | null;
+  subjects: { subject: { id: string; name: string } }[];
 };
 
 function SessionTable({
@@ -102,7 +101,17 @@ function SessionTable({
             </td>
             <td className={td}>
               {s.title}
-              {s.subject && <span className="block text-xs text-muted">{s.subject.name}</span>}
+              <span className="mt-1 flex flex-wrap gap-1">
+                {s.subjects.length === 0 ? (
+                  <Badge tone="neutral">Semua murid</Badge>
+                ) : (
+                  s.subjects.map(({ subject }) => (
+                    <Badge key={subject.id} tone="beige">
+                      {subject.name}
+                    </Badge>
+                  ))
+                )}
+              </span>
             </td>
             <td className={cn(td, "text-xs text-ink-soft")}>{s.notes || "—"}</td>
             <td className={td}>
@@ -114,7 +123,7 @@ function SessionTable({
                   <SessionForm
                     action={updateTuitionSession.bind(null, s.id)}
                     subjects={subjects}
-                    defaults={{ ...s, date: toISODate(s.date) }}
+                    defaults={{ ...s, date: toISODate(s.date), subjectIds: s.subjects.map((x) => x.subject.id) }}
                     submitLabel="Simpan Perubahan"
                   />
                 </Modal>
@@ -138,9 +147,10 @@ function SessionForm({
 }: {
   action: (prev: ActionState, formData: FormData) => Promise<ActionState>;
   subjects: { id: string; name: string }[];
-  defaults: { date?: string; startTime?: string; endTime?: string; title?: string; subjectId?: string | null; notes?: string | null };
+  defaults: { date?: string; startTime?: string; endTime?: string; title?: string; subjectIds?: string[]; notes?: string | null };
   submitLabel: string;
 }) {
+  const selected = new Set(defaults.subjectIds ?? []);
   return (
     <ActionForm action={action} className="space-y-4">
       <Field label="Tajuk sesi" name="title" required>
@@ -157,16 +167,24 @@ function SessionForm({
           <Input id="endTime" name="endTime" type="time" defaultValue={defaults.endTime ?? "17:00"} required />
         </Field>
       </div>
-      <Field label="Subjek (pilihan)" name="subjectId">
-        <Select id="subjectId" name="subjectId" defaultValue={defaults.subjectId ?? ""}>
-          <option value="">— Pelbagai / tiada —</option>
+      <fieldset>
+        <legend className="text-[13px] font-medium text-ink-soft">Subjek kelas ini (boleh pilih lebih daripada satu)</legend>
+        <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
           {subjects.map((s) => (
-            <option key={s.id} value={s.id}>
+            <label
+              key={s.id}
+              className="flex cursor-pointer items-center gap-2.5 rounded-xl border border-line px-3 py-2 text-sm hover:bg-beige-50 has-checked:border-navy-300 has-checked:bg-navy-50"
+            >
+              <input type="checkbox" name="subjectIds" value={s.id} defaultChecked={selected.has(s.id)} className="size-4 accent-navy-600" />
               {s.name}
-            </option>
+            </label>
           ))}
-        </Select>
-      </Field>
+        </div>
+        <p className="mt-2 text-xs text-muted">
+          Peringatan kelas dipaparkan kepada ibu bapa murid yang mengambil subjek yang ditanda. Jika tiada subjek ditanda,
+          semua ibu bapa akan menerima peringatan.
+        </p>
+      </fieldset>
       <Field label="Catatan" name="notes">
         <Textarea id="notes" name="notes" defaultValue={defaults.notes ?? ""} />
       </Field>

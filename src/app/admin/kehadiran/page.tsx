@@ -23,7 +23,7 @@ export default async function TakeAttendancePage({ searchParams }: PageProps<"/a
       select: { id: true, studentCode: true, fullName: true, isDemo: true },
     }),
     prisma.attendance.findMany({ where: { date: day }, select: { studentId: true, status: true, note: true } }),
-    prisma.tuitionSession.findMany({ where: { date: day }, orderBy: { startTime: "asc" }, include: { subject: true } }),
+    prisma.tuitionSession.findMany({ where: { date: day }, orderBy: { startTime: "asc" } }),
   ]);
   const byStudent = new Map(records.map((r) => [r.studentId, r]));
 

@@ -8,8 +8,8 @@ function nowHHMM() {
 }
 
 /**
- * Upcoming tuition classes relevant to one student: classes for a subject the
- * student is enrolled in, plus general classes with no subject set.
+ * Upcoming tuition classes relevant to one student: classes that include any
+ * subject the student is enrolled in, plus general classes with no subject set.
  * Classes that already finished today are skipped.
  */
 export async function upcomingClassesForStudent(subjectIds: string[], take = 4) {
@@ -17,11 +17,14 @@ export async function upcomingClassesForStudent(subjectIds: string[], take = 4) 
   const sessions = await prisma.tuitionSession.findMany({
     where: {
       date: { gte: parseISODate(today) },
-      OR: [{ subjectId: null }, ...(subjectIds.length ? [{ subjectId: { in: subjectIds } }] : [])],
+      OR: [
+        { subjects: { none: {} } },
+        ...(subjectIds.length ? [{ subjects: { some: { subjectId: { in: subjectIds } } } }] : []),
+      ],
     },
     orderBy: [{ date: "asc" }, { startTime: "asc" }],
     take: take + 4,
-    include: { subject: { select: { name: true } } },
+    include: { subjects: { select: { subjectId: true, subject: { select: { name: true } } } } },
   });
   const now = nowHHMM();
   return sessions
@@ -31,7 +34,15 @@ export async function upcomingClassesForStudent(subjectIds: string[], take = 4) 
     .map((s) => ({
       id: s.id,
       title: s.title,
-      subject: s.subject?.name ?? null,
+      // Show the student's own subject(s) in this class first, e.g. "3 M" for a 3M pupil.
+      subject:
+        s.subjects.length === 0
+          ? null
+          : [...s.subjects]
+              .sort((a, b) => Number(subjectIds.includes(b.subjectId)) - Number(subjectIds.includes(a.subjectId)))
+              .filter((x, _i, all) => subjectIds.includes(x.subjectId) || !all.some((y) => subjectIds.includes(y.subjectId)))
+              .map((x) => x.subject.name)
+              .join(", "),
       notes: s.notes,
       date: s.dateISO,
       startTime: s.startTime,

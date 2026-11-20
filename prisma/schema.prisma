@@ -172,7 +172,7 @@ model Subject {
   students      StudentSubject[]
   tuitionExams  TuitionExamination[]
   schoolResults SchoolResult[]
-  sessions      TuitionSession[]
+  sessions      TuitionSessionSubject[]
 
   @@map("subjects")
 }
@@ -216,15 +216,28 @@ model TuitionSession {
   startTime String /// "15:00"
   endTime   String /// "17:00"
   title     String
-  subjectId String?
   notes     String?
   isDemo    Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  subject Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  /// Subjects this class covers (one class can mix groups, e.g. Matematik + 3M).
+  /// No subjects = a general class for every student.
+  subjects TuitionSessionSubject[]
 
   @@index([date])
   @@map("tuition_sessions")
+}
+
+model TuitionSessionSubject {
+  sessionId String
+  subjectId String
+
+  session TuitionSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  subject Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@id([sessionId, subjectId])
+  @@index([subjectId])
+  @@map("tuition_session_subjects")
 }
 
 // ───────────────────────── Tuition exams (admin only) ─────────────────────────

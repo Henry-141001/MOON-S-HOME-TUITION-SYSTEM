@@ -143,6 +143,12 @@ body {
   .rtable td > .flex.justify-end {
     padding-top: 0.25rem;
   }
+  /* Edit dialogs opened from a table row must not inherit the card alignment. */
+  .rtable td dialog {
+    text-align: left;
+    font-size: 0.875rem;
+    font-weight: 400;
+  }
 }
 
 /* Thin progress bar shown while moving between pages. */

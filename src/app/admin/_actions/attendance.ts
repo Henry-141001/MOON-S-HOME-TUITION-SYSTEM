@@ -71,10 +71,18 @@ const sessionSchema = z
     startTime: time("Masa mula"),
     endTime: time("Masa tamat"),
     title: text("Tajuk sesi", 120),
-    subjectId: z.string().optional().transform((v) => (v ? v : null)),
     notes: optionalText(500),
   })
   .refine((v) => v.endTime > v.startTime, { message: "Masa tamat mesti selepas masa mula.", path: ["endTime"] });
+
+/** Ticked subjects (checkboxes named subjectIds), keeping only ones that exist. */
+async function sessionSubjects(formData: FormData) {
+  const ids = [...new Set(formData.getAll("subjectIds").map(String).filter(Boolean))];
+  if (ids.length === 0) return [];
+  return prisma.subject.findMany({ where: { id: { in: ids } }, select: { id: true, name: true } });
+}
+
+const subjectsText = (subjects: { name: string }[]) => (subjects.length ? subjects.map((s) => s.name).join(", ") : "semua murid");
 
 export async function createTuitionSession(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const admin = await requireAdmin();
@@ -82,8 +90,15 @@ export async function createTuitionSession(_prev: ActionState, formData: FormDat
   if (parsed.error) return parsed.error;
   const d = parsed.data;
   try {
-    await prisma.tuitionSession.create({ data: { ...d, date: parseISODate(d.date) } });
-    await logActivity(adminActor(admin), "session.create", `Menjadualkan sesi "${d.title}" pada ${formatDate(d.date)} ${d.startTime}`);
+    const subjects = await sessionSubjects(formData);
+    await prisma.tuitionSession.create({
+      data: { ...d, date: parseISODate(d.date), subjects: { create: subjects.map((s) => ({ subjectId: s.id })) } },
+    });
+    await logActivity(
+      adminActor(admin),
+      "session.create",
+      `Menjadualkan sesi "${d.title}" pada ${formatDate(d.date)} ${d.startTime} (${subjectsText(subjects)})`,
+    );
   } catch (e) {
     return handleError(e);
   }
@@ -97,8 +112,20 @@ export async function updateTuitionSession(sessionId: string, _prev: ActionState
   if (parsed.error) return parsed.error;
   const d = parsed.data;
   try {
-    await prisma.tuitionSession.update({ where: { id: sessionId }, data: { ...d, date: parseISODate(d.date) } });
-    await logActivity(adminActor(admin), "session.update", `Mengemas kini sesi "${d.title}" (${formatDate(d.date)})`);
+    const subjects = await sessionSubjects(formData);
+    await prisma.tuitionSession.update({
+      where: { id: sessionId },
+      data: {
+        ...d,
+        date: parseISODate(d.date),
+        subjects: { deleteMany: {}, create: subjects.map((s) => ({ subjectId: s.id })) },
+      },
+    });
+    await logActivity(
+      adminActor(admin),
+      "session.update",
+      `Mengemas kini sesi "${d.title}" (${formatDate(d.date)}, ${subjectsText(subjects)})`,
+    );
   } catch (e) {
     return handleError(e);
   }
