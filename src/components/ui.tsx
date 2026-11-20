@@ -2,7 +2,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import type { ComponentProps, ReactNode } from "react";
+import { Children, isValidElement, type ComponentProps, type ReactElement, type ReactNode } from "react";
 
 export function cn(...classes: (string | false | null | undefined)[]) {
   return classes.filter(Boolean).join(" ");
@@ -244,10 +244,52 @@ export function TrendText({ change }: { change: number | null }) {
 
 // ───────── Tables ─────────
 
+/** Plain text of a React node (used to read table header labels on the server). */
+function textOf(node: ReactNode): string {
+  if (node === null || node === undefined || typeof node === "boolean") return "";
+  if (typeof node === "string" || typeof node === "number") return String(node);
+  if (Array.isArray(node)) return node.map(textOf).join("");
+  if (isValidElement<{ children?: ReactNode }>(node)) return textOf(node.props.children);
+  return "";
+}
+
+/** Finds <thead><tr><th>…</th></tr></thead> among the table's children and returns the header texts. */
+function headerLabels(children: ReactNode): string[] {
+  for (const child of Children.toArray(children)) {
+    if (!isValidElement<{ children?: ReactNode }>(child) || child.type !== "thead") continue;
+    const row = Children.toArray(child.props.children).find(
+      (r): r is ReactElement<{ children?: ReactNode }> => isValidElement(r) && r.type === "tr",
+    );
+    if (!row) return [];
+    return Children.toArray(row.props.children)
+      .filter((c): c is ReactElement<{ children?: ReactNode }> => isValidElement(c) && c.type === "th")
+      .map((c) => textOf(c.props.children).trim());
+  }
+  return [];
+}
+
+function hashKey(s: string) {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36);
+}
+
+/**
+ * Data table. On phones (< 640px) every row turns into a card: the first column
+ * is the card title and every other value is shown under it with its column
+ * label — so nothing needs horizontal scrolling and each value stays next to
+ * the name it belongs to. Labels are read from the <th> cells automatically.
+ */
 export function Table({ children, className }: { children: ReactNode; className?: string }) {
+  const labels = headerLabels(children);
+  const key = `rt-${hashKey(labels.join("|"))}`;
+  const css = labels
+    .map((label, i) => (i === 0 || !label ? "" : `.${key} td:nth-child(${i + 1})::before{content:${JSON.stringify(label)}}`))
+    .join("");
   return (
-    <div className={cn("-mx-px overflow-x-auto", className)}>
-      <table className="w-full min-w-[560px] border-collapse text-left text-sm">{children}</table>
+    <div className={cn("rtable -mx-px sm:overflow-x-auto", key, className)}>
+      {css && <style dangerouslySetInnerHTML={{ __html: `@media (max-width:639px){${css}}` }} />}
+      <table className="w-full border-collapse text-left text-sm sm:min-w-[560px]">{children}</table>
     </div>
   );
 }

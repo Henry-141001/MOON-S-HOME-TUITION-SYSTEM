@@ -81,6 +81,70 @@ body {
   min-width: 0;
 }
 
+/* Tables → stacked cards on phones (labels per column come from <Table>).
+   Unlayered CSS, so it overrides the Tailwind utility classes on cells. */
+@media (max-width: 639px) {
+  .rtable thead {
+    display: none;
+  }
+  .rtable table,
+  .rtable tbody,
+  .rtable tr,
+  .rtable td {
+    display: block;
+    width: 100%;
+  }
+  .rtable tr {
+    border-bottom: 1px solid var(--color-line);
+    padding: 0.85rem 1rem;
+  }
+  .rtable tr:last-child {
+    border-bottom: 0;
+  }
+  /* Label floats left, value flows on the right (multi-line values stack neatly). */
+  .rtable td {
+    display: flow-root;
+    border: 0;
+    padding: 0.3rem 0;
+    text-align: right;
+    white-space: normal;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  /* Column label on the left of each value. */
+  .rtable td::before {
+    float: left;
+    margin-right: 0.75rem;
+    line-height: 1.5rem;
+    text-align: left;
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--color-muted);
+  }
+  /* First column = card title (name, date, subject…). */
+  .rtable td:first-child {
+    padding: 0 0 0.35rem;
+    text-align: left;
+    font-size: 0.9375rem;
+    font-weight: 600;
+  }
+  /* Empty trailing cells take no space; action buttons get a little room above. */
+  .rtable td:last-child:not(:first-child):empty {
+    display: none;
+  }
+  /* Rows inside values (name + badge, action buttons…) also sit on the right. */
+  .rtable td:not(:first-child) > .flex,
+  .rtable td:not(:first-child) > .inline-flex {
+    justify-content: flex-end;
+  }
+  .rtable td > .flex.justify-end {
+    padding-top: 0.25rem;
+  }
+}
+
 /* Thin progress bar shown while moving between pages. */
 @keyframes nav-progress {
   0% {
