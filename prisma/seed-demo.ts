@@ -10,10 +10,15 @@
 import "dotenv/config";
 import { randomInt } from "node:crypto";
 import { PrismaNeon } from "@prisma/adapter-neon";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
 import type { AttendanceStatus, CommentCategory, SchoolExamType, SubmissionStatus } from "../src/generated/prisma/enums";
 
-const prisma = new PrismaClient({ adapter: new PrismaNeon({ connectionString: process.env.DIRECT_URL ?? process.env.DATABASE_URL! }) });
+const connectionString = process.env.DIRECT_URL ?? process.env.DATABASE_URL!;
+// DB_DRIVER=pg = local throwaway test database (scripts/test-db.mjs); otherwise Neon.
+const prisma = new PrismaClient({
+  adapter: process.env.DB_DRIVER === "pg" ? new PrismaPg({ connectionString, max: 1 }) : new PrismaNeon({ connectionString }),
+});
 
 const ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 const code4 = () => Array.from({ length: 4 }, () => ALPHABET[randomInt(ALPHABET.length)]).join("");

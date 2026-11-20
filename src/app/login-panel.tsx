@@ -122,13 +122,24 @@ function ParentForm() {
 
 function AdminForm() {
   const [state, action] = useActionState(adminLogin, initialState);
+  // Controlled, so the Admin ID is kept after a wrong password (React clears uncontrolled fields).
+  const [loginId, setLoginId] = useState("");
   return (
     <form action={action} className="space-y-4">
       <div>
         <label htmlFor="loginId" className="text-sm font-medium text-ink">
           ID Admin
         </label>
-        <Input id="loginId" name="loginId" autoComplete="username" required className="mt-1.5 h-12" spellCheck={false} />
+        <Input
+          id="loginId"
+          name="loginId"
+          value={loginId}
+          onChange={(e) => setLoginId(e.target.value)}
+          autoComplete="username"
+          required
+          className="mt-1.5 h-12"
+          spellCheck={false}
+        />
       </div>
       <div>
         <label htmlFor="password" className="text-sm font-medium text-ink">

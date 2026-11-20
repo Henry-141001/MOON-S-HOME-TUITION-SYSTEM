@@ -75,9 +75,12 @@ export const marks = (label: string) =>
     .min(0, `${label} tidak boleh negatif.`)
     .max(10000, `${label} terlalu besar.`);
 
-export const checkbox = z
-  .union([z.literal("on"), z.literal("true"), z.literal(""), z.undefined(), z.null()])
-  .transform((v) => v === "on" || v === "true");
+/**
+ * A checkbox field. Browsers send nothing at all for an unticked box, so the
+ * value is normalised first: ticked ("on"/"true") → true, missing/anything else → false.
+ * (A plain union with z.undefined() fails in zod v4 when the key is missing.)
+ */
+export const checkbox = z.preprocess((v) => v === "on" || v === "true", z.boolean());
 
 export function formObject(formData: FormData): Record<string, string> {
   const out: Record<string, string> = {};

@@ -10,6 +10,7 @@ import "dotenv/config";
 import { randomBytes, scrypt } from "node:crypto";
 import { promisify } from "node:util";
 import { PrismaNeon } from "@prisma/adapter-neon";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
 
 const scryptAsync = promisify(scrypt) as (pw: string, salt: Buffer, keylen: number) => Promise<Buffer>;
@@ -19,7 +20,11 @@ async function hashSecret(secret: string) {
   return ["scrypt", salt.toString("hex"), hash.toString("hex")].join("$");
 }
 
-const prisma = new PrismaClient({ adapter: new PrismaNeon({ connectionString: process.env.DIRECT_URL ?? process.env.DATABASE_URL! }) });
+const connectionString = process.env.DIRECT_URL ?? process.env.DATABASE_URL!;
+// DB_DRIVER=pg = local throwaway test database (scripts/test-db.mjs); otherwise Neon.
+const prisma = new PrismaClient({
+  adapter: process.env.DB_DRIVER === "pg" ? new PrismaPg({ connectionString, max: 1 }) : new PrismaNeon({ connectionString }),
+});
 
 const DEFAULT_SUBJECTS = [
   "Bahasa Melayu",

@@ -87,6 +87,10 @@ export function ActionForm({
       <FormPendingContext value={pending}>
         <form
           ref={formRef}
+          // Fallback before the page is interactive: React renders this as a real POST to
+          // the server action, so an early tap still saves (and never puts data in the URL).
+          // Once hydrated, onSubmit below takes over and prevents the default submit.
+          action={formAction}
           className={className}
           id={id}
           noValidate
