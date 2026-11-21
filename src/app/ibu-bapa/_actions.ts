@@ -1,9 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { assertParentOwnsStudent, requireParent } from "@/lib/session";
-import { fail, handleError, ok } from "@/lib/action";
+import { fail, formObject, handleError, ok, parse, text } from "@/lib/action";
+import { REPLY_MAX } from "@/lib/constants";
 import { parseISODate } from "@/lib/dates";
 import { DUPLICATE_SCHOOL_EXAM, parseSchoolExamForm } from "@/lib/school-form";
 import { logActivity, parentActor, studentLabel } from "@/lib/activity";
@@ -12,9 +14,10 @@ import { deleteStudentPhoto, saveStudentPhoto } from "@/lib/photos";
 import type { ActionState } from "@/lib/action-state";
 
 /**
- * Parents may only touch SCHOOL examination results (while not yet approved)
- * and their own child's profile photo — always only for their own children.
- * Tuition marks, attendance and teacher comments have no parent actions at all.
+ * Parents may only touch SCHOOL examination results (while not yet approved),
+ * their own child's profile photo, and reply under PUBLISHED teacher comments —
+ * always only for their own children. Tuition marks, attendance and the teacher's
+ * comments themselves can never be changed by a parent.
  */
 
 export async function uploadChildPhoto(studentId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -143,4 +146,48 @@ export async function deleteOwnSchoolExam(examId: string): Promise<ActionState> 
   }
   revalidatePath("/", "layout");
   return ok("Rekod telah dipadam.");
+}
+
+// ───────── Replying to the teacher's comments ─────────
+
+const replySchema = z.object({ content: text("Balasan", REPLY_MAX) });
+
+export async function parentReplyToComment(commentId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
+  const parent = await requireParent();
+  const parsed = parse(replySchema, formObject(formData));
+  if (parsed.error) return parsed.error;
+  try {
+    const c = await prisma.teacherComment.findUnique({ where: { id: commentId }, select: { studentId: true, isPublished: true } });
+    // A hidden (draft) comment is treated exactly like a missing one.
+    if (!c || !c.isPublished) return fail("Ulasan tidak dijumpai.");
+    await assertParentOwnsStudent(parent.id, c.studentId);
+    await prisma.$transaction([
+      prisma.commentReply.create({ data: { commentId, authorType: "PARENT", parentId: parent.id, content: parsed.data.content } }),
+      prisma.commentReply.updateMany({ where: { commentId, authorType: "ADMIN", readAt: null }, data: { readAt: new Date() } }),
+    ]);
+    await logActivity(parentActor(parent), "comment.reply", `Membalas ulasan guru untuk ${await studentLabel(c.studentId)}`, c.studentId);
+  } catch (e) {
+    return handleError(e);
+  }
+  revalidatePath("/", "layout");
+  return ok("Balasan anda telah dihantar kepada guru.");
+}
+
+/** A parent can take back their own message. */
+export async function parentDeleteOwnReply(replyId: string): Promise<ActionState> {
+  const parent = await requireParent();
+  try {
+    const r = await prisma.commentReply.findUnique({
+      where: { id: replyId },
+      select: { parentId: true, comment: { select: { studentId: true } } },
+    });
+    if (!r || r.parentId !== parent.id) return fail("Balasan tidak dijumpai.");
+    await assertParentOwnsStudent(parent.id, r.comment.studentId);
+    await prisma.commentReply.delete({ where: { id: replyId } });
+    await logActivity(parentActor(parent), "comment.reply", `Memadam balasan sendiri (${await studentLabel(r.comment.studentId)})`, r.comment.studentId);
+  } catch (e) {
+    return handleError(e);
+  }
+  revalidatePath("/", "layout");
+  return ok("Balasan telah dipadam.");
 }

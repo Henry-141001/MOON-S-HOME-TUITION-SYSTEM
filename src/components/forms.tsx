@@ -221,7 +221,7 @@ export function ConfirmButton({
   message: string;
   children: ReactNode;
   variant?: "primary" | "secondary" | "danger" | "soft" | "ghost";
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
   className?: string;
   name?: string;
   value?: string;

@@ -4,6 +4,7 @@ import { toISODate } from "@/lib/dates";
 import { attendanceCounts, average, monthlyAttendance, percent, subjectPerformance, type ScoreRow } from "@/lib/analytics";
 import { SCHOOL_EXAM_LABELS } from "@/lib/constants";
 import type { CommentCategory, SchoolExamType, SubmissionStatus } from "@/generated/prisma/enums";
+import type { Prisma } from "@/generated/prisma/client";
 
 /**
  * Everything about one student's academic record, used by the admin profile,
@@ -51,11 +52,19 @@ export async function getStudentRecords(studentId: string, opts: { audience: "ad
     prisma.teacherComment.findMany({
       where: { studentId, ...(opts.audience === "parent" ? { isPublished: true } : {}) },
       orderBy: [{ commentDate: "desc" }, { createdAt: "desc" }],
-      select: { id: true, category: true, content: true, commentDate: true, isPublished: true },
+      select: COMMENT_SELECT,
     }),
   ]);
 
   const attendanceRows = attendance.map((a) => ({ ...a, date: toISODate(a.date) }));
+
+  const commentRows = shapeComments(comments, tuition);
+  // Published-for-parents comments about a tuition test, shown under that test's mark.
+  const examComments = new Map<string, { id: string; content: string; isPublished: boolean }[]>();
+  for (const c of commentRows) {
+    if (!c.exam) continue;
+    examComments.set(c.exam.id, [...(examComments.get(c.exam.id) ?? []), { id: c.id, content: c.content, isPublished: c.isPublished }]);
+  }
 
   const tuitionRows = tuition.map((r) => ({
     id: r.id,
@@ -67,6 +76,7 @@ export async function getStudentRecords(studentId: string, opts: { audience: "ad
     total: r.exam.totalMarks,
     percent: percent(r.marksObtained, r.exam.totalMarks),
     remarks: r.remarks,
+    teacherComments: examComments.get(r.exam.id) ?? [],
   }));
 
   const schoolExams = school.map((e) => {
@@ -118,9 +128,76 @@ export async function getStudentRecords(studentId: string, opts: { audience: "ad
       .filter((e) => e.overall !== null)
       .sort((a, b) => a.date.localeCompare(b.date))
       .map((e) => ({ label: shortExamLabel(e), date: e.date, percent: e.overall as number })),
-    comments: comments.map((c) => ({ ...c, category: c.category as CommentCategory, commentDate: toISODate(c.commentDate) })),
+    comments: commentRows,
   };
 }
+
+/** Fields loaded for every teacher comment (with its linked test and conversation). */
+export const COMMENT_SELECT = {
+  id: true,
+  category: true,
+  content: true,
+  commentDate: true,
+  isPublished: true,
+  tuitionExam: { select: { id: true, name: true, date: true, totalMarks: true, subject: { select: { name: true } } } },
+  replies: {
+    orderBy: { createdAt: "asc" },
+    select: {
+      id: true,
+      authorType: true,
+      parentId: true,
+      content: true,
+      readAt: true,
+      createdAt: true,
+      admin: { select: { name: true } },
+      parent: { select: { name: true } },
+    },
+  },
+} as const satisfies Prisma.TeacherCommentSelect;
+
+type CommentWithLinks = Prisma.TeacherCommentGetPayload<{ select: typeof COMMENT_SELECT }>;
+
+/**
+ * Turns loaded comments into plain rows for the UI. `results` are the student's
+ * tuition marks, used to show the mark of the test a "Keputusan Ujian" comment is about.
+ */
+export function shapeComments(
+  comments: CommentWithLinks[],
+  results: { marksObtained: number; exam: { id: string } }[],
+) {
+  const markByExam = new Map(results.map((r) => [r.exam.id, r.marksObtained]));
+  return comments.map((c) => {
+    const e = c.tuitionExam;
+    const marks = e ? markByExam.get(e.id) : undefined;
+    return {
+      id: c.id,
+      category: c.category as CommentCategory,
+      content: c.content,
+      commentDate: toISODate(c.commentDate),
+      isPublished: c.isPublished,
+      exam: e
+        ? {
+            id: e.id,
+            name: e.name,
+            subject: e.subject.name,
+            date: toISODate(e.date),
+            percent: marks === undefined ? null : percent(marks, e.totalMarks),
+          }
+        : null,
+      replies: c.replies.map((r) => ({
+        id: r.id,
+        fromParent: r.authorType === "PARENT",
+        parentId: r.parentId,
+        authorName: r.authorType === "PARENT" ? (r.parent?.name ?? "Ibu bapa") : (r.admin?.name ?? "Guru"),
+        content: r.content,
+        unread: r.readAt === null,
+        createdAt: r.createdAt.toISOString(),
+      })),
+    };
+  });
+}
+
+export type CommentRow = ReturnType<typeof shapeComments>[number];
 
 export type StudentRecords = Awaited<ReturnType<typeof getStudentRecords>>;
 

@@ -5,7 +5,11 @@ import { AppShell, type NavItem } from "@/components/app-shell";
 
 export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   const viewer = await requireAdminView();
-  const pending = await prisma.schoolExamination.count({ where: { status: "PENDING", student: { isActive: true } } });
+  const [pending, newReplies] = await Promise.all([
+    prisma.schoolExamination.count({ where: { status: "PENDING", student: { isActive: true } } }),
+    // Parent replies under teacher comments that the teacher has not opened yet.
+    prisma.commentReply.count({ where: { authorType: "PARENT", readAt: null, comment: { student: { isActive: true } } } }),
+  ]);
 
   const nav: NavItem[] = [
     { href: "/admin", label: "Dashboard", icon: "dashboard", exact: true },
@@ -14,7 +18,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
     { href: "/admin/subjek", label: "Subjek Tuisyen", icon: "subjects" },
     { href: "/admin/kehadiran", label: "Rekod Kehadiran", icon: "attendance" },
     { href: "/admin/markah-tuisyen", label: "Markah Ujian Tuisyen", icon: "tuition" },
-    { href: "/admin/ulasan", label: "Ulasan Guru", icon: "comments" },
+    { href: "/admin/ulasan", label: "Ulasan Guru", icon: "comments", badge: newReplies },
     { href: "/admin/keputusan-sekolah", label: "Keputusan Ujian Sekolah", icon: "school", badge: pending },
     { href: "/admin/laporan", label: "Laporan", icon: "reports" },
     // The observer gets the activity log instead of the admin's settings.

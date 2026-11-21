@@ -1,3 +1,4 @@
+import { prisma } from "@/lib/prisma";
 import { getParentChildren, requireParentView } from "@/lib/session";
 import { logout } from "@/app/actions/auth";
 import { stopObservingParent } from "@/app/admin/_actions/observer";
@@ -15,9 +16,14 @@ const NAV: NavItem[] = [
 export default async function ParentLayout({ children }: LayoutProps<"/ibu-bapa">) {
   const { parent, readOnly } = await requireParentView();
   const kids = await getParentChildren(parent.id);
+  // Teacher replies (on published comments about this parent's children) not yet seen.
+  const newReplies = await prisma.commentReply.count({
+    where: { authorType: "ADMIN", readAt: null, comment: { isPublished: true, studentId: { in: kids.map((k) => k.id) } } },
+  });
+  const nav = NAV.map((item) => (item.href === "/ibu-bapa/ulasan" ? { ...item, badge: newReplies } : item));
   return (
     <AppShell
-      nav={NAV}
+      nav={nav}
       portalLabel={readOnly ? "Portal Ibu Bapa · Pemerhati" : "Portal Ibu Bapa"}
       userName={parent.name}
       userMeta={`ID: ${parent.parentCode}`}

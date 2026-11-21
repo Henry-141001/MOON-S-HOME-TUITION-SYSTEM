@@ -11,7 +11,7 @@ export function cn(...classes: (string | false | null | undefined)[]) {
 // ───────── Buttons ─────────
 
 type Variant = "primary" | "secondary" | "ghost" | "danger" | "soft";
-type Size = "sm" | "md" | "lg";
+type Size = "xs" | "sm" | "md" | "lg";
 
 /**
  * Every variant has a visible shape (fill or border) so it reads as tappable on
@@ -23,6 +23,7 @@ export function buttonClass(variant: Variant = "primary", size: Size = "md", ext
     "transition-[background-color,border-color,color,transform] duration-150 active:scale-[0.97]",
     "disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100",
     // Phones get taller hit areas (min. 36–48px); desktop stays compact.
+    size === "xs" && "h-7 px-2.5 text-xs",
     size === "sm" && "h-9 px-3.5 text-[13px] sm:h-8 sm:px-3",
     size === "md" && "h-11 px-4 text-sm sm:h-10",
     size === "lg" && "h-12 px-6 text-base",

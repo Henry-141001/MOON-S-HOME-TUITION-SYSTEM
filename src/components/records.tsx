@@ -1,7 +1,7 @@
 // Shared, server-rendered views of a student's records (admin profile + parent portal).
 import Image from "next/image";
 import type { ReactNode } from "react";
-import { CalendarCheck, CalendarX, CircleSlash, Percent } from "lucide-react";
+import { CalendarCheck, CalendarX, CircleSlash, ClipboardCheck, Percent } from "lucide-react";
 import {
   Badge,
   Card,
@@ -20,7 +20,7 @@ import {
 } from "@/components/ui";
 import { PercentBarChart, TrendLineChart } from "@/components/charts";
 import { ATTENDANCE_LABELS, COMMENT_CATEGORIES, COMMENT_LABELS, SUBMISSION_LABELS, gradeFor } from "@/lib/constants";
-import { formatDate, formatMonth, formatShortDate } from "@/lib/dates";
+import { formatDate, formatDateTime, formatMonth, formatShortDate } from "@/lib/dates";
 import { timelineBySubject, type SubjectPerformance } from "@/lib/analytics";
 import type { StudentRecords } from "@/lib/records";
 
@@ -196,7 +196,15 @@ export function TuitionResultsTable({ rows, limit }: { rows: StudentRecords["tui
               <PercentPill value={r.percent} />
             </td>
             <td className={cn(td, "font-semibold")}>{gradeFor(r.percent).grade}</td>
-            <td className={cn(td, "text-ink-soft")}>{r.remarks || "—"}</td>
+            <td className={cn(td, "text-ink-soft")}>
+              {r.remarks || (r.teacherComments.length === 0 ? "—" : null)}
+              {r.teacherComments.map((tc) => (
+                <span key={tc.id} className="mt-1 block max-w-80 rounded-lg bg-gold-100/50 px-2 py-1 text-xs text-ink first:mt-0">
+                  <span className="font-semibold text-gold-600">Ulasan guru{tc.isPublished ? "" : " (draf)"}: </span>
+                  <span className="line-clamp-3">{tc.content}</span>
+                </span>
+              ))}
+            </td>
           </tr>
         ))}
       </tbody>
@@ -417,13 +425,27 @@ export function SectionTitle({ title, subtitle, tone }: { title: string; subtitl
 
 // ───────── Comments ─────────
 
+type CommentItem = StudentRecords["comments"][number];
+type ReplyItem = CommentItem["replies"][number];
+
+/**
+ * Teacher comments as cards. A "Keputusan Ujian" comment shows the test and its mark.
+ * Under each comment is the conversation between the teacher and the parents.
+ * `viewer` decides which unread messages are highlighted as new.
+ */
 export function CommentsList({
   comments,
   renderActions,
+  renderReplyForm,
+  renderReplyActions,
+  viewer = "admin",
   limit,
 }: {
-  comments: StudentRecords["comments"];
-  renderActions?: (comment: StudentRecords["comments"][number]) => ReactNode;
+  comments: CommentItem[];
+  renderActions?: (comment: CommentItem) => ReactNode;
+  renderReplyForm?: (comment: CommentItem) => ReactNode;
+  renderReplyActions?: (comment: CommentItem, reply: ReplyItem) => ReactNode;
+  viewer?: "admin" | "parent";
   limit?: number;
 }) {
   const list = limit ? comments.slice(0, limit) : comments;
@@ -431,7 +453,7 @@ export function CommentsList({
   return (
     <ol className="space-y-3">
       {list.map((c) => (
-        <li key={c.id} className="rounded-2xl border border-line bg-surface p-4">
+        <li key={c.id} id={`ulasan-${c.id}`} className="scroll-mt-24 rounded-2xl border border-line bg-surface p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-2">
               <Badge tone={categoryTone(c.category)}>{COMMENT_LABELS[c.category]}</Badge>
@@ -439,11 +461,64 @@ export function CommentsList({
             </div>
             <time className="text-xs text-muted">{formatDate(c.commentDate)}</time>
           </div>
+          {c.exam && <ExamChip exam={c.exam} />}
           <p className="mt-2.5 whitespace-pre-line text-sm leading-relaxed text-ink">{c.content}</p>
-          {renderActions && <div className="mt-3 flex flex-wrap justify-end gap-2">{renderActions(c)}</div>}
+
+          {c.replies.length > 0 && (
+            <ul className="mt-3 space-y-2 border-t border-line pt-3" aria-label="Perbualan">
+              {c.replies.map((r) => {
+                const isNew = r.unread && (viewer === "admin" ? r.fromParent : !r.fromParent);
+                return (
+                  <li key={r.id} className={cn("flex", r.fromParent ? "justify-end" : "justify-start")}>
+                    <div
+                      className={cn(
+                        "max-w-[85%] rounded-2xl px-3.5 py-2.5",
+                        r.fromParent ? "rounded-br-md bg-navy-50" : "rounded-bl-md bg-beige-100",
+                        isNew && "ring-2 ring-gold-300",
+                      )}
+                    >
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
+                        <span className="font-semibold text-ink">{r.fromParent ? r.authorName : `${r.authorName} (Guru)`}</span>
+                        <time className="text-muted">{formatDateTime(new Date(r.createdAt))}</time>
+                        {isNew && <Badge tone="gold">Baharu</Badge>}
+                      </div>
+                      <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-ink">{r.content}</p>
+                      {renderReplyActions && <div className="mt-1 flex justify-end">{renderReplyActions(c, r)}</div>}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          {(renderReplyForm || renderActions) && (
+            <div className="mt-3 flex flex-wrap items-start justify-end gap-2">
+              {renderReplyForm?.(c)}
+              {renderActions?.(c)}
+            </div>
+          )}
         </li>
       ))}
     </ol>
+  );
+}
+
+/** The tuition test a "Keputusan Ujian" comment is about, with the student's mark. */
+function ExamChip({ exam }: { exam: NonNullable<CommentItem["exam"]> }) {
+  return (
+    <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-xl border border-gold-300/60 bg-gold-100/40 px-3 py-2">
+      <ClipboardCheck className="size-4 shrink-0 text-gold-600" aria-hidden />
+      <span className="min-w-[11rem] flex-1">
+        <span className="block text-sm font-medium text-ink">{exam.name}</span>
+        <span className="block text-xs text-muted">
+          {exam.subject} · {formatDate(exam.date)}
+        </span>
+      </span>
+      <span className="flex items-center gap-1.5 text-xs text-muted">
+        Markah <PercentPill value={exam.percent} />
+        {exam.percent !== null && <span className="font-semibold text-ink">{gradeFor(exam.percent).grade}</span>}
+      </span>
+    </div>
   );
 }
 
@@ -467,7 +542,13 @@ export function LatestCommentsByCategory({
             <p className="text-[13px] font-semibold text-navy-700">{COMMENT_LABELS[c.category]}</p>
             <time className="text-xs text-muted">{formatDate(c.commentDate)}</time>
           </div>
+          {c.exam && (
+            <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted">
+              {c.exam.name} · {c.exam.subject} <PercentPill value={c.exam.percent} />
+            </p>
+          )}
           <p className="mt-1.5 whitespace-pre-line text-sm leading-relaxed text-ink">{c.content}</p>
+          {c.replies.length > 0 && <p className="mt-2 text-xs text-navy-700">{c.replies.length} balasan dalam perbualan</p>}
         </div>
       ))}
     </div>
@@ -484,6 +565,8 @@ function categoryTone(category: string) {
       return "sky" as const;
     case "ATTITUDE":
       return "rose" as const;
+    case "EXAM_RESULT":
+      return "gold" as const;
     default:
       return "beige" as const;
   }

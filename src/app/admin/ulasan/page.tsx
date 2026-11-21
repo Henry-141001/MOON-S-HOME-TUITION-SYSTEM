@@ -2,48 +2,100 @@ import Link from "next/link";
 import { MessageSquarePlus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdminView } from "@/lib/session";
-import { formatDate, todayISO, toISODate } from "@/lib/dates";
+import { formatDate, todayISO } from "@/lib/dates";
+import { percent } from "@/lib/analytics";
+import { COMMENT_SELECT, shapeComments } from "@/lib/records";
 import { COMMENT_LABELS } from "@/lib/constants";
 import { Badge, ButtonLink, Card, CardBody, CardHeader, EmptyState, PageHeader, RowChevron, cn } from "@/components/ui";
 import { ConfirmButton, InlineAction, Modal } from "@/components/forms";
 import { CommentsList, StudentAvatar } from "@/components/records";
-import { createComment, deleteComment, setCommentPublished, updateComment } from "@/app/admin/_actions/comments";
-import { CommentForm } from "./comment-form";
+import {
+  adminDeleteReply,
+  adminReplyToComment,
+  createComment,
+  deleteComment,
+  setCommentPublished,
+  updateComment,
+} from "@/app/admin/_actions/comments";
+import { ReplyForm } from "@/components/reply-form";
+import { CommentForm, type ExamOption } from "./comment-form";
 
 export const metadata = { title: "Ulasan Guru" };
 
 export default async function CommentsPage({ searchParams }: PageProps<"/admin/ulasan">) {
-  await requireAdminView();
+  const viewer = await requireAdminView();
   const sp = await searchParams;
   const studentId = typeof sp.murid === "string" ? sp.murid : "";
 
-  const students = await prisma.student.findMany({
-    where: { OR: [{ isActive: true }, ...(studentId ? [{ id: studentId }] : [])] },
-    orderBy: { fullName: "asc" },
-    select: {
-      id: true,
-      fullName: true,
-      studentCode: true,
-      photo: { select: { updatedAt: true } },
-      _count: { select: { comments: true } },
-    },
-  });
+  const [students, unreadRows] = await Promise.all([
+    prisma.student.findMany({
+      where: { OR: [{ isActive: true }, ...(studentId ? [{ id: studentId }] : [])] },
+      orderBy: { fullName: "asc" },
+      select: {
+        id: true,
+        fullName: true,
+        studentCode: true,
+        photo: { select: { updatedAt: true } },
+        _count: { select: { comments: true } },
+      },
+    }),
+    // Parent messages the teacher has not seen yet, per student.
+    prisma.commentReply.findMany({
+      where: { authorType: "PARENT", readAt: null },
+      select: { comment: { select: { studentId: true } } },
+    }),
+  ]);
+  const unreadByStudent = new Map<string, number>();
+  for (const r of unreadRows) unreadByStudent.set(r.comment.studentId, (unreadByStudent.get(r.comment.studentId) ?? 0) + 1);
   const selected = students.find((s) => s.id === studentId) ?? null;
 
-  const comments = selected
-    ? await prisma.teacherComment.findMany({
-        where: { studentId: selected.id },
-        orderBy: [{ commentDate: "desc" }, { createdAt: "desc" }],
-        select: { id: true, category: true, content: true, commentDate: true, isPublished: true },
-      })
-    : [];
+  const [rawComments, results] = selected
+    ? await Promise.all([
+        prisma.teacherComment.findMany({
+          where: { studentId: selected.id },
+          orderBy: [{ commentDate: "desc" }, { createdAt: "desc" }],
+          select: COMMENT_SELECT,
+        }),
+        prisma.tuitionResult.findMany({
+          where: { studentId: selected.id },
+          orderBy: { exam: { date: "desc" } },
+          select: {
+            marksObtained: true,
+            exam: { select: { id: true, name: true, date: true, totalMarks: true, subject: { select: { name: true } } } },
+          },
+        }),
+      ])
+    : [[], []];
+  const comments = shapeComments(rawComments, results);
+  const examOptions: ExamOption[] = results.map((r) => ({
+    id: r.exam.id,
+    label: `${r.exam.name} · ${r.exam.subject.name} · ${formatDate(r.exam.date)} — ${percent(r.marksObtained, r.exam.totalMarks).toFixed(1)}%`,
+  }));
+
+  // The teacher has now seen this student's new parent messages (they stay marked
+  // "Baharu" on this visit). The read-only observer never changes anything.
+  if (selected && !viewer.readOnly && unreadByStudent.get(selected.id)) {
+    await prisma.commentReply.updateMany({
+      where: { authorType: "PARENT", readAt: null, comment: { studentId: selected.id } },
+      data: { readAt: new Date() },
+    });
+  }
+
   const recent = selected
     ? []
     : await prisma.teacherComment.findMany({
         where: { student: { isActive: true } },
         orderBy: [{ commentDate: "desc" }, { createdAt: "desc" }],
         take: 10,
-        select: { id: true, category: true, content: true, commentDate: true, isPublished: true, student: { select: { id: true, fullName: true } } },
+        select: {
+          id: true,
+          category: true,
+          content: true,
+          commentDate: true,
+          isPublished: true,
+          student: { select: { id: true, fullName: true } },
+          _count: { select: { replies: { where: { authorType: "PARENT", readAt: null } } } },
+        },
       });
 
   return (
@@ -70,6 +122,11 @@ export default async function CommentsPage({ searchParams }: PageProps<"/admin/u
                       {s.studentCode} · {s._count.comments} ulasan
                     </span>
                   </span>
+                  {(unreadByStudent.get(s.id) ?? 0) > 0 && (
+                    <Badge tone="gold" className="shrink-0">
+                      {unreadByStudent.get(s.id)} baharu
+                    </Badge>
+                  )}
                   <RowChevron />
                 </Link>
               </li>
@@ -94,6 +151,7 @@ export default async function CommentsPage({ searchParams }: PageProps<"/admin/u
                   key={selected.id}
                   action={createComment.bind(null, selected.id)}
                   defaults={{ commentDate: todayISO() }}
+                  exams={examOptions}
                   submitLabel="Simpan Ulasan"
                   resetOnSuccess
                 />
@@ -104,13 +162,31 @@ export default async function CommentsPage({ searchParams }: PageProps<"/admin/u
               <CardHeader title="Semua Ulasan" description={`${comments.length} ulasan · terbaru dahulu`} />
               <CardBody>
                 <CommentsList
-                  comments={comments.map((c) => ({ ...c, commentDate: toISODate(c.commentDate) }))}
+                  comments={comments}
+                  viewer="admin"
+                  renderReplyForm={(c) => (
+                    <ReplyForm action={adminReplyToComment.bind(null, c.id)} placeholder="Balas kepada ibu bapa…" />
+                  )}
+                  renderReplyActions={(_c, r) => (
+                    <InlineAction action={adminDeleteReply.bind(null, r.id)}>
+                      <ConfirmButton variant="ghost" size="xs" message="Padam mesej ini daripada perbualan?">
+                        Padam
+                      </ConfirmButton>
+                    </InlineAction>
+                  )}
                   renderActions={(c) => (
                     <>
                       <Modal trigger="Edit" triggerVariant="ghost" triggerSize="sm" title="Kemas Kini Ulasan">
                         <CommentForm
                           action={updateComment.bind(null, c.id)}
-                          defaults={{ category: c.category, content: c.content, commentDate: c.commentDate, isPublished: c.isPublished }}
+                          defaults={{
+                            category: c.category,
+                            content: c.content,
+                            commentDate: c.commentDate,
+                            isPublished: c.isPublished,
+                            tuitionExamId: c.exam?.id ?? null,
+                          }}
+                          exams={examOptions}
                           submitLabel="Simpan Perubahan"
                         />
                       </Modal>
@@ -148,6 +224,7 @@ export default async function CommentsPage({ searchParams }: PageProps<"/admin/u
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <p className="text-sm font-medium text-ink">{c.student.fullName}</p>
                           <span className="flex items-center gap-2 text-xs text-muted">
+                            {c._count.replies > 0 && <Badge tone="gold">{c._count.replies} balasan baharu</Badge>}
                             {!c.isPublished && <Badge tone="neutral">Draf</Badge>}
                             {formatDate(c.commentDate)}
                           </span>

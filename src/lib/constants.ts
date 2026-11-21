@@ -35,6 +35,7 @@ export const SUBMISSION_STATUSES = ["PENDING", "APPROVED", "NEEDS_CORRECTION"] a
 
 export const COMMENT_LABELS: Record<CommentCategory, string> = {
   ACADEMIC: "Prestasi Akademik",
+  EXAM_RESULT: "Keputusan Ujian",
   STRENGTHS: "Kekuatan",
   IMPROVEMENT: "Ruang Penambahbaikan",
   PARTICIPATION: "Penyertaan Dalam Kelas",
@@ -45,6 +46,7 @@ export const COMMENT_LABELS: Record<CommentCategory, string> = {
 };
 export const COMMENT_CATEGORIES = [
   "ACADEMIC",
+  "EXAM_RESULT",
   "STRENGTHS",
   "IMPROVEMENT",
   "PARTICIPATION",
@@ -53,6 +55,9 @@ export const COMMENT_CATEGORIES = [
   "RECOMMENDATIONS",
   "GENERAL",
 ] as const satisfies readonly CommentCategory[];
+
+/** Longest reply a teacher or parent can post under a comment. */
+export const REPLY_MAX = 1000;
 
 export const YEAR_FORM_OPTIONS = [
   "Prasekolah",

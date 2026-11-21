@@ -48,6 +48,12 @@ enum CommentCategory {
   ATTITUDE // Sikap dan Disiplin
   RECOMMENDATIONS // Cadangan untuk Ibu Bapa
   GENERAL // Ulasan Umum
+  EXAM_RESULT // Keputusan Ujian (linked to one tuition test)
+}
+
+enum ReplyAuthor {
+  ADMIN
+  PARENT
 }
 
 // ───────────────────────── Accounts ─────────────────────────
@@ -66,6 +72,7 @@ model Admin {
   tuitionExams      TuitionExamination[]
   comments          TeacherComment[]
   reviewedSchoolExs SchoolExamination[]
+  commentReplies    CommentReply[]
 
   @@map("admin")
 }
@@ -86,6 +93,7 @@ model Parent {
   children    ParentStudent[]
   sessions    Session[]
   submissions SchoolExamination[]
+  replies     CommentReply[]
 
   @@map("parents")
 }
@@ -254,9 +262,10 @@ model TuitionExamination {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  subject   Subject         @relation(fields: [subjectId], references: [id], onDelete: Restrict)
-  createdBy Admin           @relation(fields: [createdById], references: [id])
+  subject   Subject          @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  createdBy Admin            @relation(fields: [createdById], references: [id])
   results   TuitionResult[]
+  comments  TeacherComment[]
 
   @@index([date])
   @@map("tuition_examinations")
@@ -282,21 +291,47 @@ model TuitionResult {
 // ───────────────────────── Teacher comments ─────────────────────────
 
 model TeacherComment {
-  id          String          @id @default(cuid())
-  studentId   String
-  category    CommentCategory
-  content     String
-  commentDate DateTime        @db.Date
-  isPublished Boolean         @default(true) /// parents only see published comments
-  authorId    String
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  id            String          @id @default(cuid())
+  studentId     String
+  category      CommentCategory
+  content       String
+  commentDate   DateTime        @db.Date
+  isPublished   Boolean         @default(true) /// parents only see published comments
+  /// Optional tuition test this comment is about (shown next to that test's mark).
+  tuitionExamId String?
+  authorId      String
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  author  Admin   @relation(fields: [authorId], references: [id])
+  student     Student             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  author      Admin               @relation(fields: [authorId], references: [id])
+  tuitionExam TuitionExamination? @relation(fields: [tuitionExamId], references: [id], onDelete: SetNull)
+  replies     CommentReply[]
 
   @@index([studentId, commentDate])
+  @@index([tuitionExamId])
   @@map("teacher_comments")
+}
+
+/// A message in the conversation under a teacher comment (teacher or parent).
+model CommentReply {
+  id         String      @id @default(cuid())
+  commentId  String
+  authorType ReplyAuthor
+  adminId    String?
+  parentId   String?
+  content    String
+  /// When the other side (teacher for parent replies, parent for teacher replies) first saw it.
+  readAt     DateTime?
+  createdAt  DateTime    @default(now())
+
+  comment TeacherComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  admin   Admin?         @relation(fields: [adminId], references: [id], onDelete: SetNull)
+  parent  Parent?        @relation(fields: [parentId], references: [id], onDelete: SetNull)
+
+  @@index([commentId, createdAt])
+  @@index([authorType, readAt])
+  @@map("comment_replies")
 }
 
 // ───────────────────────── School exams (parent input) ─────────────────────────
@@ -344,8 +379,8 @@ model SchoolResult {
 
 /// Server-side login sessions. Only a SHA-256 hash of the cookie token is stored.
 model Session {
-  id         String   @id @default(cuid())
-  tokenHash  String   @unique
+  id              String   @id @default(cuid())
+  tokenHash       String   @unique
   role            Role
   adminId         String?
   parentId        String?

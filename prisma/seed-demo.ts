@@ -199,7 +199,8 @@ async function main() {
   }
 
   // Teacher comments.
-  const commentBank: Record<CommentCategory, string[]> = {
+  // "Keputusan Ujian" comments need a linked test, so the demo leaves them out.
+  const commentBank: Record<Exclude<CommentCategory, "EXAM_RESULT">, string[]> = {
     ACADEMIC: ["Prestasi semakin baik, terutamanya dalam penyelesaian masalah.", "Prestasi stabil. Perlu lebih fokus semasa ujian."],
     STRENGTHS: ["Cepat memahami konsep baharu dan suka bertanya.", "Tulisan kemas dan jalan kerja tersusun."],
     IMPROVEMENT: ["Perlu lebih latihan dalam soalan berayat (KBAT).", "Perlu memperbanyakkan kosa kata Bahasa Inggeris."],
@@ -209,7 +210,7 @@ async function main() {
     RECOMMENDATIONS: ["Galakkan membaca buku cerita Bahasa Inggeris 15 minit setiap hari.", "Bantu anak menghafal sifir 6 hingga 9 di rumah."],
     GENERAL: ["Terima kasih atas sokongan ibu bapa.", "Teruskan usaha yang baik!"],
   };
-  const cats = Object.keys(commentBank) as CommentCategory[];
+  const cats = Object.keys(commentBank) as (keyof typeof commentBank)[];
   const comments = students.flatMap((s, i) =>
     cats
       .filter((_, k) => (k + i) % 2 === 0 || k < 3)
