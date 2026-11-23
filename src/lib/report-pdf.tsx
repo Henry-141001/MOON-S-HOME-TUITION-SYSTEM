@@ -104,7 +104,7 @@ export function ReportDocument({ r }: { r: StudentReport }) {
             {/* eslint-disable-next-line jsx-a11y/alt-text -- react-pdf Image has no alt prop */}
             <Image src={LOGO_SRC} style={{ width: 46, height: 46 }} />
             <View>
-              <Text style={s.brand}>{r.centre.name.toUpperCase()}</Text>
+              <Text style={s.brand}>{r.centre.name}</Text>
               <Text style={s.small}>{BRAND_TAGLINE}</Text>
               {(r.centre.address || r.centre.phone) && (
                 <Text style={s.small}>{[r.centre.address, r.centre.phone].filter(Boolean).join("  |  ")}</Text>

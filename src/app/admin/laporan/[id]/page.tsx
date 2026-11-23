@@ -45,7 +45,7 @@ export default async function StudentReportPage({ params }: PageProps<"/admin/la
           <div className="flex items-center gap-3">
             <BrandMark size={64} />
             <div>
-              <p className="font-display text-xl font-semibold tracking-wide text-ink">{r.centre.name.toUpperCase()}</p>
+              <p className="font-display text-xl font-semibold tracking-wide text-ink">{r.centre.name}</p>
               <p className="text-xs tracking-wide text-muted">{BRAND_TAGLINE}</p>
               {(r.centre.address || r.centre.phone) && (
                 <p className="text-xs text-muted">{[r.centre.address, r.centre.phone].filter(Boolean).join(" · ")}</p>

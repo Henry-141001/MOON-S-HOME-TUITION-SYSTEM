@@ -347,7 +347,7 @@ export function BrandLogo({ subtitle }: { subtitle?: string }) {
     <div className="flex items-center gap-2.5">
       <BrandMark size={42} />
       <div className="leading-tight">
-        <p className="font-display text-[15px] font-semibold tracking-wide text-ink">MOONS HOMETUITION</p>
+        <p className="font-display text-[15px] font-semibold tracking-wide text-ink">Moons HomeTuition</p>
         {subtitle && <p className="text-xs text-muted">{subtitle}</p>}
       </div>
     </div>

@@ -6,7 +6,7 @@ import type {
   SubmissionStatus,
 } from "@/generated/prisma/enums";
 
-export const BRAND = "MOONS HOMETUITION";
+export const BRAND = "Moons HomeTuition";
 export const BRAND_NAME = "Moons HomeTuition";
 export const BRAND_TAGLINE = "Adab · Rajin · Berjaya";
 
