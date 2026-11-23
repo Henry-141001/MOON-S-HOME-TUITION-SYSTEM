@@ -8,6 +8,7 @@ import { createParent } from "@/app/admin/_actions/parents";
 import { ParentForm } from "./parent-form";
 import { CopyCode } from "./copy-code";
 import { ObserveParentButton } from "./observe-button";
+import { ConsentStatus } from "./consent-status";
 import { observeParent } from "@/app/admin/_actions/observer";
 
 export const metadata = { title: "Maklumat Ibu Bapa" };
@@ -68,6 +69,7 @@ export default async function ParentsPage() {
                 <th className={th}>Nama</th>
                 <th className={th}>Anak</th>
                 <th className={th}>Keselamatan</th>
+                <th className={th}>Persetujuan</th>
                 <th className={th}>Status</th>
                 <th className={th}></th>
               </tr>
@@ -108,6 +110,9 @@ export default async function ParentsPage() {
                     ) : (
                       <Badge tone="beige">ID sahaja</Badge>
                     )}
+                  </td>
+                  <td className={td}>
+                    <ConsentStatus consentAt={p.consentAt} nameConfirmedAt={p.nameConfirmedAt} />
                   </td>
                   <td className={td}>{p.isActive ? <Badge tone="success">Aktif</Badge> : <Badge tone="neutral">Tidak Aktif</Badge>}</td>
                   <td className={cn(td, "text-right")}>

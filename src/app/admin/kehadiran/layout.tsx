@@ -12,7 +12,7 @@ export default async function AttendanceLayout({ children }: LayoutProps<"/admin
           { href: "/admin/kehadiran", label: "Ambil Kehadiran" },
           { href: "/admin/kehadiran/sejarah", label: "Sejarah" },
           { href: "/admin/kehadiran/statistik", label: "Statistik" },
-          { href: "/admin/kehadiran/jadual", label: "Jadual Sesi" },
+          { href: "/admin/kehadiran/jadual", label: "Jadual Kelas" },
         ]}
       />
       {children}

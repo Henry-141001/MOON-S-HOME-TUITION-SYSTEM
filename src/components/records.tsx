@@ -463,6 +463,19 @@ export function CommentsList({
           </div>
           {c.exam && <ExamChip exam={c.exam} />}
           <p className="mt-2.5 whitespace-pre-line text-sm leading-relaxed text-ink">{c.content}</p>
+          {c.photoUrl && (
+            <a href={c.photoUrl} target="_blank" rel="noopener" className="mt-3 block w-fit max-w-full overflow-hidden rounded-xl ring-1 ring-line">
+              <Image
+                src={c.photoUrl}
+                alt={`Gambar ulasan ${COMMENT_LABELS[c.category]}`}
+                width={480}
+                height={360}
+                unoptimized
+                loading="lazy"
+                className="h-auto max-h-80 w-auto max-w-full object-contain"
+              />
+            </a>
+          )}
 
           {c.replies.length > 0 && (
             <ul className="mt-3 space-y-2 border-t border-line pt-3" aria-label="Perbualan">

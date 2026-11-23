@@ -6,8 +6,8 @@ import type {
   SubmissionStatus,
 } from "@/generated/prisma/enums";
 
-export const BRAND = "MOONS HOME TUTOR";
-export const BRAND_NAME = "Moons Home Tutor";
+export const BRAND = "MOONS HOMETUITION";
+export const BRAND_NAME = "Moons HomeTuition";
 export const BRAND_TAGLINE = "Adab · Rajin · Berjaya";
 
 export const ATTENDANCE_LABELS: Record<AttendanceStatus, string> = {
@@ -85,3 +85,27 @@ export function gradeFor(percent: number): { grade: string; tone: "good" | "ok" 
   if (percent >= 40) return { grade: "D", tone: "warn" };
   return { grade: "E", tone: "bad" };
 }
+
+// ───────── First-login consent (parents) ─────────
+
+export const CONSENT_TITLE = "Pengesahan & Persetujuan Ibu Bapa / Penjaga";
+export const CONSENT_PARAGRAPHS = [
+  "Saya bersetuju bahawa pihak Moons HomeTuition boleh mendidik anak saya dengan kaedah pembelajaran yang positif dan bersesuaian dengan umur anak.",
+  "Saya faham bahawa pihak Moons HomeTuition TIDAK AKAN menggunakan sebarang bentuk hukuman fizikal dengan niat mencederakan anak saya dari segi fizikal dan emosi.",
+  "Saya juga bersetuju untuk dihubungi oleh pihak Moons HomeTuition berkaitan perkembangan pembelajaran anak saya.",
+] as const;
+export const CONSENT_CHECKBOX = "Saya telah membaca dan bersetuju dengan kenyataan di atas.";
+/** Exact wording saved with every consent record. */
+export const CONSENT_STATEMENT = [CONSENT_TITLE, ...CONSENT_PARAGRAPHS, `[✓] ${CONSENT_CHECKBOX}`].join("\n\n");
+
+// ───────── Class timetable ─────────
+
+export const SESSION_STATUSES = ["SCHEDULED", "REPLACEMENT", "HOLIDAY", "CANCELLED"] as const;
+export type SessionStatusValue = (typeof SESSION_STATUSES)[number];
+/** Labels in the admin form. Parents see "Kelas Seterusnya" on the nearest scheduled class. */
+export const SESSION_STATUS_LABELS: Record<SessionStatusValue, string> = {
+  SCHEDULED: "Dijadualkan",
+  REPLACEMENT: "Kelas Ganti",
+  HOLIDAY: "Cuti",
+  CANCELLED: "Dibatalkan",
+};

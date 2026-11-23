@@ -25,7 +25,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/">) {
         <div className="absolute -bottom-32 -left-20 size-[28rem] rounded-full bg-navy-800/50" />
         {/* Name only — the large badge below is the one logo on this panel. */}
         <div className="relative leading-tight">
-          <p className="font-display text-lg font-semibold tracking-wide">MOONS HOME TUTOR</p>
+          <p className="font-display text-lg font-semibold tracking-wide">MOONS HOMETUITION</p>
           <p className="text-xs tracking-wide text-beige-100/75">{BRAND_TAGLINE}</p>
         </div>
         <div className="relative max-w-md">
@@ -35,7 +35,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/">) {
             Kehadiran, markah ujian tuisyen, keputusan peperiksaan sekolah dan ulasan guru, semuanya di satu tempat.
           </p>
         </div>
-        <p className="relative text-xs text-beige-100/60">© {year} Moons Home Tutor</p>
+        <p className="relative text-xs text-beige-100/60">© {year} Moons HomeTuition</p>
       </section>
 
       {/* Phone / tablet header: the round badge on a navy band */}
@@ -44,7 +44,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/">) {
         <div className="absolute -bottom-24 -left-16 size-60 rounded-full bg-navy-800/50" aria-hidden="true" />
         <div className="relative">
           <BrandMark size={116} priority className="mx-auto ring-4 ring-gold-300/60" />
-          <p className="mt-4 font-display text-xl font-semibold tracking-wide">MOONS HOME TUTOR</p>
+          <p className="mt-4 font-display text-xl font-semibold tracking-wide">MOONS HOMETUITION</p>
           <p className="mt-1 text-sm tracking-wide text-beige-100/85">{BRAND_TAGLINE}</p>
         </div>
       </header>
@@ -55,7 +55,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/">) {
           <h2 className="font-display text-[28px] font-semibold text-ink sm:text-3xl">Selamat datang</h2>
           <p className="mt-1 text-sm text-muted">Sila pilih jenis log masuk anda.</p>
           <LoginPanel initialTab={initialTab} />
-          <p className="mt-8 text-center text-xs text-muted lg:hidden">© {year} Moons Home Tutor</p>
+          <p className="mt-8 text-center text-xs text-muted lg:hidden">© {year} Moons HomeTuition</p>
         </div>
       </section>
     </div>

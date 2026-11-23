@@ -16,6 +16,7 @@ import {
 import { ParentForm } from "../parent-form";
 import { CopyCode } from "../copy-code";
 import { ObserveParentButton } from "../observe-button";
+import { ConsentStatus } from "../consent-status";
 import { observeParent } from "@/app/admin/_actions/observer";
 
 export const metadata = { title: "Akaun Ibu Bapa" };
@@ -30,6 +31,7 @@ export default async function ParentDetailPage({ params }: PageProps<"/admin/ibu
         children: { select: { studentId: true, relationship: true } },
         sessions: { where: { expiresAt: { gt: new Date() } }, orderBy: { lastSeenAt: "desc" }, take: 1, select: { createdAt: true } },
         _count: { select: { submissions: true, sessions: true } },
+        consents: { orderBy: { agreedAt: "desc" }, take: 1 },
       },
     }),
     prisma.student.findMany({
@@ -81,6 +83,29 @@ export default async function ParentDetailPage({ params }: PageProps<"/admin/ibu
         </Card>
 
         <div className="space-y-6">
+          <Card>
+            <CardHeader title="Pengesahan & Persetujuan" description="Direkodkan semasa ibu bapa log masuk kali pertama." />
+            <CardBody className="space-y-3">
+              <ConsentStatus consentAt={parent.consentAt} nameConfirmedAt={parent.nameConfirmedAt} />
+              {parent.consents[0] ? (
+                <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-sm">
+                  <dt className="text-muted">ID Ibu Bapa</dt>
+                  <dd className="font-medium">{parent.consents[0].parentCode}</dd>
+                  <dt className="text-muted">Nama penuh</dt>
+                  <dd className="font-medium">{parent.consents[0].fullName}</dd>
+                  <dt className="text-muted">No. telefon</dt>
+                  <dd className="font-medium">{parent.consents[0].phone || "—"}</dd>
+                  <dt className="text-muted">Tarikh & masa</dt>
+                  <dd className="font-medium">{formatDateTime(parent.consents[0].agreedAt)}</dd>
+                </dl>
+              ) : (
+                <p className="text-xs text-muted">
+                  Ibu bapa akan diminta mengemas kini nama dan bersetuju dengan kenyataan persetujuan semasa log masuk kali pertama.
+                </p>
+              )}
+            </CardBody>
+          </Card>
+
           <Card>
             <CardHeader title="ID Ibu Bapa" description="Berikan ID ini kepada ibu bapa untuk log masuk." />
             <CardBody className="space-y-3">

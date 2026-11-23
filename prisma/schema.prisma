@@ -56,6 +56,14 @@ enum ReplyAuthor {
   PARENT
 }
 
+/// Status of a scheduled class, shown to parents in "Jadual Kelas".
+enum SessionStatus {
+  SCHEDULED // Dijadualkan (the nearest one is shown as "Kelas Seterusnya")
+  REPLACEMENT // Kelas Ganti
+  HOLIDAY // Cuti
+  CANCELLED // Dibatalkan
+}
+
 // ───────────────────────── Accounts ─────────────────────────
 
 /// The single admin/teacher account.
@@ -73,27 +81,34 @@ model Admin {
   comments          TeacherComment[]
   reviewedSchoolExs SchoolExamination[]
   commentReplies    CommentReply[]
+  galleryPhotos     GalleryPhoto[]
 
   @@map("admin")
 }
 
 /// One row per family. Parents log in with parentCode only (optional PIN).
 model Parent {
-  id         String   @id @default(cuid())
-  parentCode String   @unique /// e.g. MHT001-K7QX — the Parent ID
-  name       String /// Parent / guardian name
-  phone      String?
-  notes      String?
-  pinHash    String? /// Optional PIN upgrade — when set, login also asks for the PIN
-  isActive   Boolean  @default(true)
-  isDemo     Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id              String    @id @default(cuid())
+  parentCode      String    @unique /// e.g. MHT001-K7QX — the Parent ID
+  name            String /// Parent / guardian name
+  phone           String?
+  notes           String?
+  pinHash         String? /// Optional PIN upgrade — when set, login also asks for the PIN
+  isActive        Boolean   @default(true)
+  isDemo          Boolean   @default(false)
+  /// First login: when the parent confirmed their full name (step 1).
+  nameConfirmedAt DateTime?
+  /// First login: when the parent agreed to the consent statement (step 2). Null = must finish first-login steps.
+  consentAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  children    ParentStudent[]
-  sessions    Session[]
-  submissions SchoolExamination[]
-  replies     CommentReply[]
+  children      ParentStudent[]
+  sessions      Session[]
+  submissions   SchoolExamination[]
+  replies       CommentReply[]
+  consents      ParentConsent[]
+  notifications Notification[]
 
   @@map("parents")
 }
@@ -219,14 +234,15 @@ model Attendance {
 
 /// Planned tuition classes, shown as "upcoming sessions" on the dashboard.
 model TuitionSession {
-  id        String   @id @default(cuid())
-  date      DateTime @db.Date
+  id        String        @id @default(cuid())
+  date      DateTime      @db.Date
   startTime String /// "15:00"
   endTime   String /// "17:00"
   title     String
   notes     String?
-  isDemo    Boolean  @default(false)
-  createdAt DateTime @default(now())
+  status    SessionStatus @default(SCHEDULED)
+  isDemo    Boolean       @default(false)
+  createdAt DateTime      @default(now())
 
   /// Subjects this class covers (one class can mix groups, e.g. Matematik + 3M).
   /// No subjects = a general class for every student.
@@ -307,6 +323,7 @@ model TeacherComment {
   author      Admin               @relation(fields: [authorId], references: [id])
   tuitionExam TuitionExamination? @relation(fields: [tuitionExamId], references: [id], onDelete: SetNull)
   replies     CommentReply[]
+  photo       CommentPhoto?
 
   @@index([studentId, commentDate])
   @@index([tuitionExamId])
@@ -429,9 +446,69 @@ model ActivityLog {
 }
 
 /// Single-row table for tuition centre details used on reports.
+/// Optional picture attached to a teacher comment.
+model CommentPhoto {
+  commentId String   @id
+  data      Bytes
+  mimeType  String
+  updatedAt DateTime @updatedAt
+
+  comment TeacherComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@map("comment_photos")
+}
+
+/// Class activity photo in the gallery (seen by registered parents only).
+model GalleryPhoto {
+  id          String   @id @default(cuid())
+  takenOn     DateTime @db.Date
+  activity    String
+  data        Bytes
+  mimeType    String
+  createdById String
+  createdAt   DateTime @default(now())
+
+  createdBy Admin @relation(fields: [createdById], references: [id])
+
+  @@index([takenOn])
+  @@map("gallery_photos")
+}
+
+/// Record of a parent agreeing to the consent statement at first login.
+model ParentConsent {
+  id         String   @id @default(cuid())
+  parentId   String
+  parentCode String /// Parent ID at the time of agreeing
+  fullName   String /// name the parent entered at first login
+  phone      String?
+  statement  String /// the exact text agreed to
+  agreedAt   DateTime @default(now())
+
+  parent Parent @relation(fields: [parentId], references: [id], onDelete: Cascade)
+
+  @@index([parentId, agreedAt])
+  @@map("parent_consents")
+}
+
+/// In-app notice to a parent (e.g. a class was cancelled).
+model Notification {
+  id        String    @id @default(cuid())
+  parentId  String
+  title     String
+  body      String
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  parent Parent @relation(fields: [parentId], references: [id], onDelete: Cascade)
+
+  @@index([parentId, readAt])
+  @@map("notifications")
+}
+
 model AppSetting {
   id         Int      @id @default(1)
-  centreName String   @default("Moons Home Tutor")
+  centreName String   @default("Moons HomeTuition")
   phone      String?
   address    String?
   reportNote String?

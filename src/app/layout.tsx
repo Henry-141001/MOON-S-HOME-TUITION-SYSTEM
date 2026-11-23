@@ -8,8 +8,8 @@ const dmSans = DM_Sans({ variable: "--font-dm-sans", subsets: ["latin"] });
 const fraunces = Fraunces({ variable: "--font-fraunces", subsets: ["latin"], weight: ["500", "600"] });
 
 export const metadata: Metadata = {
-  title: { default: "Moons Home Tutor", template: "%s · Moons Home Tutor" },
-  description: "Sistem pengurusan tuisyen Moons Home Tutor — murid, kehadiran, markah dan laporan prestasi.",
+  title: { default: "Moons HomeTuition", template: "%s · Moons HomeTuition" },
+  description: "Sistem pengurusan tuisyen Moons HomeTuition — murid, kehadiran, markah dan laporan prestasi.",
   robots: { index: false, follow: false },
 };
 

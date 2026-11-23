@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { BellRing, CalendarCheck, CalendarX, Clock, Percent, Send, Trophy } from "lucide-react";
+import { Bell, BellRing, CalendarCheck, CalendarX, Clock, Percent, Send, Trophy } from "lucide-react";
+import { prisma } from "@/lib/prisma";
 import { getStudentRecords } from "@/lib/records";
 import { formatDate, formatLongDate } from "@/lib/dates";
 import { formatTime12, upcomingClassesForStudent } from "@/lib/schedule";
@@ -27,16 +28,44 @@ export const metadata = { title: "Maklumat Murid" };
 export default async function ParentHome({ searchParams }: PageProps<"/ibu-bapa">) {
   const { parent, child } = await getParentView(searchParams);
   if (!child) return <NoChildLinked />;
-  const [r, classes] = await Promise.all([
+  const [r, classes, notices] = await Promise.all([
     getStudentRecords(child.id, { audience: "parent" }),
     upcomingClassesForStudent(child.subjects.map((s) => s.subject.id)),
+    prisma.notification.findMany({
+      where: { parentId: parent.id, readAt: null },
+      orderBy: { createdAt: "desc" },
+      take: 3,
+      select: { id: true, title: true, body: true },
+    }),
   ]);
   const latestSchool = r.school[0];
   const [nextClass, ...laterClasses] = classes;
 
   return (
     <>
-      <PageHeader title={`Selamat datang, ${parent.name}`} description="Ringkasan perkembangan anak anda di Moons Home Tutor." />
+      <PageHeader title={`Selamat datang, ${parent.name}`} description="Ringkasan perkembangan anak anda di Moons HomeTuition." />
+
+      {/* New notices (e.g. a class was cancelled) */}
+      {notices.length > 0 && (
+        <section aria-label="Notifikasi baharu" className="mb-6 rounded-[var(--radius-card)] border border-gold-300 bg-gold-100/60 p-4">
+          <ul className="space-y-2.5">
+            {notices.map((n) => (
+              <li key={n.id} className="flex items-start gap-3">
+                <Bell className="mt-0.5 size-5 shrink-0 text-gold-600" aria-hidden />
+                <p className="text-sm leading-relaxed text-ink">
+                  <strong>{n.title}.</strong> {n.body}
+                </p>
+              </li>
+            ))}
+          </ul>
+          <Link
+            href={withChild("/ibu-bapa/notifikasi", child.id)}
+            className="mt-3 inline-block text-sm font-medium text-navy-700 underline underline-offset-2"
+          >
+            Lihat semua notifikasi
+          </Link>
+        </section>
+      )}
 
       {/* Next class reminder */}
       {nextClass && (
@@ -50,7 +79,7 @@ export default async function ParentHome({ searchParams }: PageProps<"/ibu-bapa"
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-xs font-medium uppercase tracking-wide text-white/75">
-                {nextClass.ongoing ? "Kelas sedang berlangsung" : "Peringatan · Kelas seterusnya"}
+                {nextClass.ongoing ? "Kelas sedang berlangsung" : nextClass.replacement ? "Peringatan · Kelas ganti" : "Peringatan · Kelas seterusnya"}
               </p>
               <p className="mt-1 font-display text-xl font-semibold leading-snug">
                 {nextClass.when ? `${nextClass.when}, ` : ""}
@@ -82,6 +111,12 @@ export default async function ParentHome({ searchParams }: PageProps<"/ibu-bapa"
               ))}
             </ul>
           )}
+          <Link
+            href={withChild("/ibu-bapa/jadual", child.id)}
+            className="flex items-center justify-between border-t border-white/15 px-5 py-3 text-sm font-medium text-white hover:bg-white/5"
+          >
+            Lihat Jadual Kelas penuh <span aria-hidden>→</span>
+          </Link>
         </section>
       )}
 

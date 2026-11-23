@@ -17,6 +17,8 @@ export async function upcomingClassesForStudent(subjectIds: string[], take = 4) 
   const sessions = await prisma.tuitionSession.findMany({
     where: {
       date: { gte: parseISODate(today) },
+      // The reminder is only for classes that actually take place.
+      status: { in: ["SCHEDULED", "REPLACEMENT"] },
       OR: [
         { subjects: { none: {} } },
         ...(subjectIds.length ? [{ subjects: { some: { subjectId: { in: subjectIds } } } }] : []),
@@ -44,6 +46,7 @@ export async function upcomingClassesForStudent(subjectIds: string[], take = 4) 
               .map((x) => x.subject.name)
               .join(", "),
       notes: s.notes,
+      replacement: s.status === "REPLACEMENT",
       date: s.dateISO,
       startTime: s.startTime,
       endTime: s.endTime,
@@ -59,3 +62,48 @@ export function formatTime12(hhmm: string) {
   const h12 = h % 12 === 0 ? 12 : h % 12;
   return `${h12}:${String(m).padStart(2, "0")} ${suffix}`;
 }
+
+/**
+ * The class timetable for one student over the next `days` days, including
+ * holidays and cancelled classes, so parents see every change.
+ * `isNext` marks the nearest class that will actually take place.
+ */
+export async function classScheduleForStudent(subjectIds: string[], days = 42) {
+  const today = todayISO();
+  const sessions = await prisma.tuitionSession.findMany({
+    where: {
+      date: { gte: parseISODate(today), lte: parseISODate(addDaysISO(today, days)) },
+      OR: [
+        { subjects: { none: {} } },
+        ...(subjectIds.length ? [{ subjects: { some: { subjectId: { in: subjectIds } } } }] : []),
+      ],
+    },
+    orderBy: [{ date: "asc" }, { startTime: "asc" }],
+    include: { subjects: { select: { subjectId: true, subject: { select: { name: true } } }, orderBy: { subject: { name: "asc" } } } },
+  });
+  const now = nowHHMM();
+  const rows = sessions
+    .map((s) => ({ ...s, dateISO: toISODate(s.date) }))
+    .filter((s) => !(s.dateISO === today && s.endTime <= now))
+    .map((s) => ({
+      id: s.id,
+      title: s.title,
+      notes: s.notes,
+      status: s.status,
+      date: s.dateISO,
+      startTime: s.startTime,
+      endTime: s.endTime,
+      when: s.dateISO === today ? "Hari ini" : s.dateISO === addDaysISO(today, 1) ? "Esok" : null,
+      // The student's own subjects in this class (all subjects if none match, e.g. a general class).
+      subjects: (() => {
+        const own = s.subjects.filter((x) => subjectIds.includes(x.subjectId));
+        return (own.length ? own : s.subjects).map((x) => x.subject.name);
+      })(),
+      isNext: false,
+    }));
+  const next = rows.find((r) => r.status === "SCHEDULED" || r.status === "REPLACEMENT");
+  if (next) next.isNext = true;
+  return rows;
+}
+
+export type ScheduleRow = Awaited<ReturnType<typeof classScheduleForStudent>>[number];

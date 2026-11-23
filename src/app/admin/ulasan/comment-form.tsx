@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ActionForm, Field, SubmitButton } from "@/components/forms";
 import { Select, Textarea, Input } from "@/components/ui";
+import { PhotoField } from "@/components/photo-field";
 import { COMMENT_CATEGORIES, COMMENT_LABELS } from "@/lib/constants";
 import type { ActionState } from "@/lib/action-state";
 
@@ -17,7 +18,15 @@ export function CommentForm({
   resetOnSuccess = false,
 }: {
   action: (prev: ActionState, formData: FormData) => Promise<ActionState>;
-  defaults?: { category?: string; content?: string; commentDate?: string; isPublished?: boolean; tuitionExamId?: string | null };
+  defaults?: {
+    category?: string;
+    content?: string;
+    commentDate?: string;
+    isPublished?: boolean;
+    tuitionExamId?: string | null;
+    /** URL of the comment's current picture, if any (edit form). */
+    photoUrl?: string | null;
+  };
   exams: ExamOption[];
   submitLabel: string;
   resetOnSuccess?: boolean;
@@ -76,6 +85,7 @@ export function CommentForm({
           required
         />
       </Field>
+      <PhotoField existingUrl={defaults.photoUrl} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <label className="flex cursor-pointer items-center gap-2 text-sm text-ink-soft">
           <input type="checkbox" name="isPublished" defaultChecked={defaults.isPublished ?? true} className="size-4 accent-navy-600" />

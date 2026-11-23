@@ -1,14 +1,17 @@
 "use client";
 
 import Link, { useLinkStatus } from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition, type ReactNode } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useState, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 import { signalNavigationStart } from "@/components/navigation-progress";
 import { ReadOnlyProvider } from "@/components/forms";
 import {
   Activity,
   ArrowLeft,
+  Bell,
+  CalendarDays,
+  Images,
   BarChart3,
   BookOpen,
   Eye,
@@ -47,6 +50,9 @@ const ICONS = {
   analysis: LineChart,
   chart: BarChart3,
   activity: Activity,
+  gallery: Images,
+  schedule: CalendarDays,
+  notifications: Bell,
 } as const;
 
 export type NavItem = { href: string; label: string; icon: keyof typeof ICONS; exact?: boolean; badge?: number };
@@ -179,6 +185,7 @@ export function AppShell({
 
       {readOnly && <ObserverBanner mode={readOnly} />}
       <main className="print-full mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-10 lg:py-9">
+        {childSwitcher && childSwitcher.length > 1 && <ChildBar items={childSwitcher} />}
         <ReadOnlyProvider value={Boolean(readOnly)}>{children}</ReadOnlyProvider>
       </main>
     </div>
@@ -251,44 +258,86 @@ function NavPending() {
   );
 }
 
+/** Every child of this parent as a tappable list (no dropdown to open first). */
 function ChildSwitcher({ items }: { items: { id: string; name: string; code: string }[] }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const current = searchParams.get("m") ?? items[0]?.id;
-  const [switching, startSwitch] = useTransition();
-
-  if (items.length === 1) {
-    return (
-      <div className="mx-3 mb-4 rounded-2xl border border-line bg-surface px-4 py-3">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-muted">Anak anda</p>
-        <p className="mt-0.5 truncate text-sm font-medium text-ink">{items[0].name}</p>
-      </div>
-    );
-  }
+  const current = useCurrentChild(items);
   return (
-    <div className="mx-3 mb-4 rounded-2xl border border-line bg-surface px-4 py-3">
-      <label htmlFor="child-switcher" className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
-        Pilih anak ({items.length})
-        {switching && <Loader2 className="size-3 animate-spin" aria-label="Memuatkan" />}
-      </label>
-      <select
-        id="child-switcher"
-        value={current}
-        disabled={switching}
-        onChange={(e) => {
-          const href = `${pathname}?m=${e.target.value}`;
-          signalNavigationStart();
-          startSwitch(() => router.push(href));
-        }}
-        className="mt-1 block w-full rounded-lg border border-line bg-cream px-2 py-1.5 text-base font-medium text-ink sm:text-sm"
-      >
+    <div className="mx-3 mb-4 rounded-2xl border border-line bg-surface px-2 py-2">
+      <p className="px-2 pb-1 pt-0.5 text-[11px] font-medium uppercase tracking-wide text-muted">
+        {items.length === 1 ? "Anak anda" : `Anak anda (${items.length})`}
+      </p>
+      <ul className="space-y-0.5">
         {items.map((c) => (
-          <option key={c.id} value={c.id}>
-            {c.name} ({c.code})
-          </option>
+          <li key={c.id}>
+            <ChildLink child={c} active={c.id === current} variant="row" />
+          </li>
         ))}
-      </select>
+      </ul>
     </div>
+  );
+}
+
+/** Same list as pills above the page, so phones see all children without opening the menu. */
+function ChildBar({ items }: { items: { id: string; name: string; code: string }[] }) {
+  const current = useCurrentChild(items);
+  return (
+    <nav aria-label="Pilih anak" className="no-print mb-5 lg:hidden">
+      <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">Anak anda ({items.length})</p>
+      <ul className="flex flex-wrap gap-2">
+        {items.map((c) => (
+          <li key={c.id}>
+            <ChildLink child={c} active={c.id === current} variant="pill" />
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
+function useCurrentChild(items: { id: string }[]) {
+  const searchParams = useSearchParams();
+  const m = searchParams.get("m");
+  return items.some((c) => c.id === m) ? m : items[0]?.id;
+}
+
+function ChildLink({
+  child,
+  active,
+  variant,
+}: {
+  child: { id: string; name: string; code: string };
+  active: boolean;
+  variant: "row" | "pill";
+}) {
+  const pathname = usePathname();
+  return (
+    <Link
+      href={`${pathname}?m=${child.id}`}
+      aria-current={active ? "true" : undefined}
+      onClick={() => !active && signalNavigationStart()}
+      className={cn(
+        variant === "row"
+          ? "flex items-center gap-2 rounded-xl px-2 py-2 text-sm"
+          : "inline-flex min-h-10 items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm",
+        active
+          ? variant === "row"
+            ? "bg-navy-50 font-semibold text-navy-700"
+            : "border-navy-600 bg-navy-600 font-medium text-white"
+          : variant === "row"
+            ? "text-ink-soft hover:bg-beige-50"
+            : "border-line bg-surface text-ink-soft hover:bg-beige-50",
+      )}
+    >
+      <span
+        className={cn(
+          "grid size-6 shrink-0 place-items-center rounded-full text-[11px] font-semibold",
+          active ? (variant === "row" ? "bg-navy-600 text-white" : "bg-white/20 text-white") : "bg-beige-100 text-ink-soft",
+        )}
+      >
+        {child.name.slice(0, 1).toUpperCase()}
+      </span>
+      <span className="min-w-0 truncate">{child.name}</span>
+      <NavPending />
+    </Link>
   );
 }

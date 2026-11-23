@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SessionStatusBadge } from "@/components/schedule";
 import { CalendarCheck, CalendarClock, CalendarX, ChevronRight, ClipboardCheck, GraduationCap, Percent } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdminView } from "@/lib/session";
@@ -241,7 +242,10 @@ export default async function AdminDashboard() {
                     <p className="text-base font-semibold leading-none text-ink">{toISODate(s.date).slice(8)}</p>
                   </div>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-ink">{s.title}</p>
+                    <p className="flex flex-wrap items-center gap-1.5 text-sm font-medium text-ink">
+                      <span className="truncate">{s.title}</span>
+                      {s.status !== "SCHEDULED" && <SessionStatusBadge status={s.status} />}
+                    </p>
                     <p className="text-xs text-muted">
                       {s.startTime}–{s.endTime}
                       {s.subjects.length ? ` · ${s.subjects.map((x) => x.subject.name).join(", ")}` : ""}

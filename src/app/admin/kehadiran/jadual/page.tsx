@@ -3,12 +3,14 @@ import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdminView } from "@/lib/session";
 import { formatLongDate, parseISODate, todayISO, toISODate } from "@/lib/dates";
-import { Badge, Card, CardHeader, EmptyState, Input, Table, Textarea, buttonClass, cn, td, th } from "@/components/ui";
+import { Card, CardHeader, EmptyState, Input, Select, Table, Textarea, buttonClass, cn, td, th } from "@/components/ui";
+import { SessionStatusBadge, SubjectChip } from "@/components/schedule";
+import { SESSION_STATUSES, SESSION_STATUS_LABELS, type SessionStatusValue } from "@/lib/constants";
 import { ActionForm, ConfirmButton, Field, InlineAction, Modal, SubmitButton } from "@/components/forms";
-import { createTuitionSession, deleteTuitionSession, updateTuitionSession } from "@/app/admin/_actions/attendance";
+import { cancelTuitionSession, createTuitionSession, deleteTuitionSession, updateTuitionSession } from "@/app/admin/_actions/attendance";
 import type { ActionState } from "@/lib/action-state";
 
-export const metadata = { title: "Jadual Sesi Tuisyen" };
+export const metadata = { title: "Jadual Kelas" };
 
 export default async function SchedulePage() {
   await requireAdminView();
@@ -33,7 +35,7 @@ export default async function SchedulePage() {
       <Card>
         <CardHeader
           title="Sesi Akan Datang"
-          description="Dipaparkan di dashboard admin dan sebagai peringatan kepada ibu bapa."
+          description="Dipaparkan kepada ibu bapa dalam Jadual Kelas. Jika kelas dibatalkan, dicutikan atau ada kelas ganti, ibu bapa diberi notifikasi secara automatik."
           actions={
             <Modal
               trigger={
@@ -65,6 +67,7 @@ type SessionRow = {
   endTime: string;
   title: string;
   notes: string | null;
+  status: SessionStatusValue;
   isDemo: boolean;
   subjects: { subject: { id: string; name: string } }[];
 };
@@ -88,13 +91,14 @@ function SessionTable({
           <th className={th}>Tarikh</th>
           <th className={th}>Masa</th>
           <th className={th}>Sesi</th>
+          <th className={th}>Status</th>
           <th className={th}>Catatan</th>
           <th className={th}></th>
         </tr>
       </thead>
       <tbody>
-        {sessions.map((s) => (
-          <tr key={s.id} className={cn(past && "text-ink-soft")}>
+        {sessions.map((s, i) => (
+          <tr key={s.id} className={cn((past || s.status === "CANCELLED" || s.status === "HOLIDAY") && "text-ink-soft")}>
             <td className={cn(td, "whitespace-nowrap font-medium")}>{formatLongDate(s.date)}</td>
             <td className={cn(td, "whitespace-nowrap")}>
               {s.startTime}–{s.endTime}
@@ -103,15 +107,17 @@ function SessionTable({
               {s.title}
               <span className="mt-1 flex flex-wrap gap-1">
                 {s.subjects.length === 0 ? (
-                  <Badge tone="neutral">Semua murid</Badge>
+                  <SubjectChip name={null} />
                 ) : (
-                  s.subjects.map(({ subject }) => (
-                    <Badge key={subject.id} tone="beige">
-                      {subject.name}
-                    </Badge>
-                  ))
+                  s.subjects.map(({ subject }) => <SubjectChip key={subject.id} name={subject.name} />)
                 )}
               </span>
+            </td>
+            <td className={td}>
+              <SessionStatusBadge
+                status={s.status}
+                isNext={!past && s.status === "SCHEDULED" && sessions.findIndex((x) => x.status === "SCHEDULED" || x.status === "REPLACEMENT") === i}
+              />
             </td>
             <td className={cn(td, "text-xs text-ink-soft")}>{s.notes || "—"}</td>
             <td className={td}>
@@ -127,6 +133,16 @@ function SessionTable({
                     submitLabel="Simpan Perubahan"
                   />
                 </Modal>
+                {!past && (s.status === "SCHEDULED" || s.status === "REPLACEMENT") && (
+                  <InlineAction action={cancelTuitionSession.bind(null, s.id)}>
+                    <ConfirmButton
+                      variant="ghost"
+                      message="Batalkan kelas ini? Ibu bapa murid yang terlibat akan menerima notifikasi secara automatik."
+                    >
+                      Batalkan
+                    </ConfirmButton>
+                  </InlineAction>
+                )}
                 <InlineAction action={deleteTuitionSession.bind(null, s.id)}>
                   <ConfirmButton message="Padam sesi ini daripada jadual? Rekod kehadiran tidak terjejas.">Padam</ConfirmButton>
                 </InlineAction>
@@ -147,7 +163,15 @@ function SessionForm({
 }: {
   action: (prev: ActionState, formData: FormData) => Promise<ActionState>;
   subjects: { id: string; name: string }[];
-  defaults: { date?: string; startTime?: string; endTime?: string; title?: string; subjectIds?: string[]; notes?: string | null };
+  defaults: {
+    date?: string;
+    startTime?: string;
+    endTime?: string;
+    title?: string;
+    subjectIds?: string[];
+    notes?: string | null;
+    status?: SessionStatusValue;
+  };
   submitLabel: string;
 }) {
   const selected = new Set(defaults.subjectIds ?? []);
@@ -155,6 +179,20 @@ function SessionForm({
     <ActionForm action={action} className="space-y-4">
       <Field label="Tajuk sesi" name="title" required>
         <Input id="title" name="title" defaultValue={defaults.title} placeholder="cth. Kelas Matematik Tahun 5" required />
+      </Field>
+      <Field
+        label="Status"
+        name="status"
+        required
+        hint="Jika ditukar kepada Dibatalkan, Cuti atau Kelas Ganti, ibu bapa akan menerima notifikasi secara automatik."
+      >
+        <Select id="status" name="status" defaultValue={defaults.status ?? "SCHEDULED"} required>
+          {SESSION_STATUSES.map((st) => (
+            <option key={st} value={st}>
+              {SESSION_STATUS_LABELS[st]}
+            </option>
+          ))}
+        </Select>
       </Field>
       <div className="grid gap-4 sm:grid-cols-3">
         <Field label="Tarikh" name="date" required>

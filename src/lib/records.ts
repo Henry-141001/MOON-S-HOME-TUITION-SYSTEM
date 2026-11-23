@@ -140,6 +140,7 @@ export const COMMENT_SELECT = {
   commentDate: true,
   isPublished: true,
   tuitionExam: { select: { id: true, name: true, date: true, totalMarks: true, subject: { select: { name: true } } } },
+  photo: { select: { updatedAt: true } },
   replies: {
     orderBy: { createdAt: "asc" },
     select: {
@@ -175,6 +176,8 @@ export function shapeComments(
       content: c.content,
       commentDate: toISODate(c.commentDate),
       isPublished: c.isPublished,
+      /** Picture URL (cache-busted by its update time), or null when there is none. */
+      photoUrl: c.photo ? `/api/ulasan-foto/${c.id}?v=${c.photo.updatedAt.getTime()}` : null,
       exam: e
         ? {
             id: e.id,

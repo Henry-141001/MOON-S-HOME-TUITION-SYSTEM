@@ -5,21 +5,9 @@ import { Camera, Loader2, Trash2 } from "lucide-react";
 import { buttonClass } from "@/components/ui";
 import { useReadOnly } from "@/components/forms";
 import { initialState, type ActionState } from "@/lib/action-state";
+import { resizeImage } from "@/lib/resize-image";
 
 const MAX_SIDE = 600;
-
-/** Resize to max 600px and re-encode as JPEG in the browser, so uploads stay small. */
-async function resizeImage(file: File): Promise<File> {
-  const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height));
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(bitmap.width * scale);
-  canvas.height = Math.round(bitmap.height * scale);
-  canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.85));
-  if (!blob) throw new Error("resize failed");
-  return new File([blob], "photo.jpg", { type: "image/jpeg" });
-}
 
 export function PhotoUploader({
   upload,
@@ -45,7 +33,7 @@ export function PhotoUploader({
     if (!file) return;
     if (!file.type.startsWith("image/")) return setClientError("Sila pilih fail gambar.");
     try {
-      const resized = await resizeImage(file);
+      const resized = await resizeImage(file, MAX_SIDE);
       const fd = new FormData();
       fd.set("photo", resized);
       startUpload(() => action(fd));

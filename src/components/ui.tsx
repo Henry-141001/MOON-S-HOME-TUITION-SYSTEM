@@ -327,12 +327,12 @@ export function MoonMark({ className }: { className?: string }) {
   );
 }
 
-/** The round Moons Home Tutor badge (public/brand/logo.png). */
+/** The round Moons HomeTuition badge (public/brand/logo.png). */
 export function BrandMark({ size = 40, className, priority = false }: { size?: number; className?: string; priority?: boolean }) {
   return (
     <Image
       src="/brand/logo.png"
-      alt="Logo Moons Home Tutor"
+      alt="Logo Moons HomeTuition"
       width={size}
       height={size}
       priority={priority}
@@ -347,7 +347,7 @@ export function BrandLogo({ subtitle }: { subtitle?: string }) {
     <div className="flex items-center gap-2.5">
       <BrandMark size={42} />
       <div className="leading-tight">
-        <p className="font-display text-[15px] font-semibold tracking-wide text-ink">MOONS HOME TUTOR</p>
+        <p className="font-display text-[15px] font-semibold tracking-wide text-ink">MOONS HOMETUITION</p>
         {subtitle && <p className="text-xs text-muted">{subtitle}</p>}
       </div>
     </div>

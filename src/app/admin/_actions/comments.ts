@@ -7,6 +7,7 @@ import { requireAdmin } from "@/lib/session";
 import { checkbox, fail, formObject, handleError, isoDate, ok, parse, text } from "@/lib/action";
 import { COMMENT_CATEGORIES, COMMENT_LABELS, REPLY_MAX } from "@/lib/constants";
 import { parseISODate } from "@/lib/dates";
+import { readUploadedImage } from "@/lib/images";
 import { adminActor, logActivity, studentLabel } from "@/lib/activity";
 import type { ActionState } from "@/lib/action-state";
 
@@ -37,6 +38,31 @@ async function resolveExamLink(studentId: string, d: CommentInput): Promise<{ ex
   return { examId: d.tuitionExamId };
 }
 
+type PhotoChange = { kind: "none" } | { kind: "remove" } | { kind: "save"; data: Uint8Array<ArrayBuffer>; mimeType: string };
+
+/** The optional picture in the form: a new file to save, "remove" (tick box), or nothing. */
+async function photoChange(formData: FormData): Promise<PhotoChange | { error: string }> {
+  const file = formData.get("photo");
+  if (file instanceof File && file.size > 0) {
+    const image = await readUploadedImage(file);
+    return "error" in image ? image : { kind: "save", ...image };
+  }
+  return formData.get("removePhoto") === "on" ? { kind: "remove" } : { kind: "none" };
+}
+
+async function applyPhoto(commentId: string, change: PhotoChange) {
+  if (change.kind === "none") return;
+  if (change.kind === "remove") {
+    await prisma.commentPhoto.deleteMany({ where: { commentId } });
+    return;
+  }
+  await prisma.commentPhoto.upsert({
+    where: { commentId },
+    create: { commentId, data: change.data, mimeType: change.mimeType },
+    update: { data: change.data, mimeType: change.mimeType },
+  });
+}
+
 function commentData(d: CommentInput, examId: string | null) {
   return {
     category: d.category,
@@ -57,7 +83,13 @@ export async function createComment(studentId: string, _prev: ActionState, formD
     if (!student) return fail("Murid tidak dijumpai.");
     const link = await resolveExamLink(studentId, d);
     if ("error" in link) return link.error;
-    await prisma.teacherComment.create({ data: { ...commentData(d, link.examId), studentId, authorId: admin.id } });
+    const photo = await photoChange(formData);
+    if ("error" in photo) return fail(photo.error, { photo: photo.error });
+    const created = await prisma.teacherComment.create({
+      data: { ...commentData(d, link.examId), studentId, authorId: admin.id },
+      select: { id: true },
+    });
+    await applyPhoto(created.id, photo);
     await logActivity(
       adminActor(admin),
       "comment.create",
@@ -80,7 +112,10 @@ export async function updateComment(commentId: string, _prev: ActionState, formD
     const existing = await prisma.teacherComment.findUniqueOrThrow({ where: { id: commentId }, select: { studentId: true } });
     const link = await resolveExamLink(existing.studentId, d);
     if ("error" in link) return link.error;
+    const photo = await photoChange(formData);
+    if ("error" in photo) return fail(photo.error, { photo: photo.error });
     await prisma.teacherComment.update({ where: { id: commentId }, data: commentData(d, link.examId) });
+    await applyPhoto(commentId, photo);
     await logActivity(adminActor(admin), "comment.update", `Mengemas kini ulasan untuk ${await studentLabel(existing.studentId)}`, existing.studentId);
   } catch (e) {
     return handleError(e);

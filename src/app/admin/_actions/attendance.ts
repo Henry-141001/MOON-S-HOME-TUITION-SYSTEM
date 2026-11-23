@@ -5,10 +5,12 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 import { fail, formObject, handleError, isoDate, ok, optionalText, parse, text } from "@/lib/action";
-import { formatDate, isValidISODate, parseISODate } from "@/lib/dates";
+import { formatDate, isValidISODate, parseISODate, toISODate } from "@/lib/dates";
 import { adminActor, logActivity } from "@/lib/activity";
 import type { ActionState } from "@/lib/action-state";
 import type { AttendanceStatus } from "@/generated/prisma/enums";
+import { SESSION_STATUSES, SESSION_STATUS_LABELS } from "@/lib/constants";
+import { notifyParentsAboutSession, statusNeedsNotice } from "@/lib/notifications";
 
 const STATUSES = new Set(["PRESENT", "ABSENT", "EXCUSED"]);
 
@@ -72,6 +74,7 @@ const sessionSchema = z
     endTime: time("Masa tamat"),
     title: text("Tajuk sesi", 120),
     notes: optionalText(500),
+    status: z.enum(SESSION_STATUSES, { error: "Sila pilih status kelas." }).default("SCHEDULED"),
   })
   .refine((v) => v.endTime > v.startTime, { message: "Masa tamat mesti selepas masa mula.", path: ["endTime"] });
 
@@ -84,26 +87,30 @@ async function sessionSubjects(formData: FormData) {
 
 const subjectsText = (subjects: { name: string }[]) => (subjects.length ? subjects.map((s) => s.name).join(", ") : "semua murid");
 
+const notifiedText = (n: number) => (n > 0 ? ` Notifikasi dihantar kepada ${n} ibu bapa.` : "");
+
 export async function createTuitionSession(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const admin = await requireAdmin();
   const parsed = parse(sessionSchema, formObject(formData));
   if (parsed.error) return parsed.error;
   const d = parsed.data;
+  let notified = 0;
   try {
     const subjects = await sessionSubjects(formData);
     await prisma.tuitionSession.create({
       data: { ...d, date: parseISODate(d.date), subjects: { create: subjects.map((s) => ({ subjectId: s.id })) } },
     });
+    notified = await notifyParentsAboutSession({ ...d, subjectIds: subjects.map((s) => s.id) });
     await logActivity(
       adminActor(admin),
       "session.create",
-      `Menjadualkan sesi "${d.title}" pada ${formatDate(d.date)} ${d.startTime} (${subjectsText(subjects)})`,
+      `Menjadualkan sesi "${d.title}" pada ${formatDate(d.date)} ${d.startTime} (${subjectsText(subjects)}) · ${SESSION_STATUS_LABELS[d.status]}`,
     );
   } catch (e) {
     return handleError(e);
   }
   revalidatePath("/", "layout");
-  return ok("Sesi tuisyen telah dijadualkan.");
+  return ok(`Sesi tuisyen telah dijadualkan.${notifiedText(notified)}`);
 }
 
 export async function updateTuitionSession(sessionId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -111,7 +118,9 @@ export async function updateTuitionSession(sessionId: string, _prev: ActionState
   const parsed = parse(sessionSchema, formObject(formData));
   if (parsed.error) return parsed.error;
   const d = parsed.data;
+  let notified = 0;
   try {
+    const before = await prisma.tuitionSession.findUniqueOrThrow({ where: { id: sessionId }, select: { status: true } });
     const subjects = await sessionSubjects(formData);
     await prisma.tuitionSession.update({
       where: { id: sessionId },
@@ -121,16 +130,20 @@ export async function updateTuitionSession(sessionId: string, _prev: ActionState
         subjects: { deleteMany: {}, create: subjects.map((s) => ({ subjectId: s.id })) },
       },
     });
+    // Parents are told automatically when a class becomes cancelled / a holiday / a replacement.
+    if (before.status !== d.status && statusNeedsNotice(d.status)) {
+      notified = await notifyParentsAboutSession({ ...d, subjectIds: subjects.map((s) => s.id) });
+    }
     await logActivity(
       adminActor(admin),
       "session.update",
-      `Mengemas kini sesi "${d.title}" (${formatDate(d.date)}, ${subjectsText(subjects)})`,
+      `Mengemas kini sesi "${d.title}" (${formatDate(d.date)}, ${subjectsText(subjects)}) · ${SESSION_STATUS_LABELS[d.status]}`,
     );
   } catch (e) {
     return handleError(e);
   }
   revalidatePath("/", "layout");
-  return ok("Sesi tuisyen telah dikemas kini.");
+  return ok(`Sesi tuisyen telah dikemas kini.${notifiedText(notified)}`);
 }
 
 export async function deleteTuitionSession(sessionId: string): Promise<ActionState> {
@@ -143,4 +156,32 @@ export async function deleteTuitionSession(sessionId: string): Promise<ActionSta
   }
   revalidatePath("/", "layout");
   return ok("Sesi telah dipadam.");
+}
+
+/** One-tap cancel from the timetable. Parents of the students in that class are notified. */
+export async function cancelTuitionSession(sessionId: string): Promise<ActionState> {
+  const admin = await requireAdmin();
+  let notified = 0;
+  try {
+    const s = await prisma.tuitionSession.findUniqueOrThrow({
+      where: { id: sessionId },
+      select: { title: true, date: true, startTime: true, endTime: true, notes: true, status: true, subjects: { select: { subjectId: true } } },
+    });
+    if (s.status === "CANCELLED") return ok("Kelas ini sudah dibatalkan.");
+    await prisma.tuitionSession.update({ where: { id: sessionId }, data: { status: "CANCELLED" } });
+    notified = await notifyParentsAboutSession({
+      title: s.title,
+      date: toISODate(s.date),
+      startTime: s.startTime,
+      endTime: s.endTime,
+      notes: s.notes,
+      status: "CANCELLED",
+      subjectIds: s.subjects.map((x) => x.subjectId),
+    });
+    await logActivity(adminActor(admin), "session.cancel", `Membatalkan kelas "${s.title}" (${formatDate(s.date)})`);
+  } catch (e) {
+    return handleError(e);
+  }
+  revalidatePath("/", "layout");
+  return ok(`Kelas telah dibatalkan.${notifiedText(notified)}`);
 }

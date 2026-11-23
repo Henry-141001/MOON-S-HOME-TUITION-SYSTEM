@@ -185,6 +185,7 @@ export default async function CommentsPage({ searchParams }: PageProps<"/admin/u
                             commentDate: c.commentDate,
                             isPublished: c.isPublished,
                             tuitionExamId: c.exam?.id ?? null,
+                            photoUrl: c.photoUrl,
                           }}
                           exams={examOptions}
                           submitLabel="Simpan Perubahan"

@@ -57,6 +57,8 @@ type ParentSession = {
   role: "PARENT";
   sessionId: string;
   parent: { id: string; parentCode: string; name: string };
+  /** First-login steps (confirm name + agree to consent) are not finished yet. */
+  needsSetup: boolean;
 };
 type SuperAdminSession = {
   role: "SUPER_ADMIN";
@@ -75,7 +77,7 @@ export const getSession = cache(async (): Promise<CurrentSession | null> => {
     where: { tokenHash: sha256(token) },
     include: {
       admin: { select: { id: true, loginId: true, name: true } },
-      parent: { select: { id: true, parentCode: true, name: true, isActive: true } },
+      parent: { select: { id: true, parentCode: true, name: true, isActive: true, consentAt: true } },
       superAdmin: { select: { id: true, name: true, isActive: true } },
     },
   });
@@ -85,8 +87,8 @@ export const getSession = cache(async (): Promise<CurrentSession | null> => {
     return { role: "ADMIN", sessionId: session.id, admin: session.admin };
   }
   if (session.role === "PARENT" && session.parent?.isActive) {
-    const { id, parentCode, name } = session.parent;
-    return { role: "PARENT", sessionId: session.id, parent: { id, parentCode, name } };
+    const { id, parentCode, name, consentAt } = session.parent;
+    return { role: "PARENT", sessionId: session.id, parent: { id, parentCode, name }, needsSetup: consentAt === null };
   }
   if (session.role === "SUPER_ADMIN" && session.superAdmin?.isActive) {
     const { id, name } = session.superAdmin;
@@ -144,6 +146,21 @@ export async function requireParent() {
   const session = await getSession();
   if (session?.role === "SUPER_ADMIN") redirect("/ibu-bapa");
   if (!session || session.role !== "PARENT") redirect("/");
+  if (session.needsSetup) redirect(PARENT_SETUP_PATH);
+  return session.parent;
+}
+
+/** Where a parent finishes the first-login steps (name, then consent). */
+export const PARENT_SETUP_PATH = "/selamat-datang";
+
+/**
+ * A logged-in parent who may still be on the first-login steps.
+ * Only for the first-login page and its actions.
+ */
+export async function requireParentForSetup() {
+  const session = await getSession();
+  if (session?.role === "SUPER_ADMIN") redirect("/admin");
+  if (!session || session.role !== "PARENT") redirect("/");
   return session.parent;
 }
 
@@ -156,7 +173,10 @@ export type ParentViewer = {
 /** READ access to the parent portal: the parent, or the super admin viewing one parent. */
 export const requireParentView = cache(async (): Promise<ParentViewer> => {
   const session = await getSession();
-  if (session?.role === "PARENT") return { parent: session.parent, readOnly: false };
+  if (session?.role === "PARENT") {
+    if (session.needsSetup) redirect(PARENT_SETUP_PATH);
+    return { parent: session.parent, readOnly: false };
+  }
   if (session?.role === "SUPER_ADMIN") {
     if (!session.observeParentId) redirect("/admin/ibu-bapa");
     const parent = await prisma.parent.findUnique({
