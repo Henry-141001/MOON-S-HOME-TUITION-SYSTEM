@@ -60,6 +60,7 @@ enum ReplyAuthor {
 enum SessionStatus {
   SCHEDULED // Dijadualkan (the nearest one is shown as "Kelas Seterusnya")
   REPLACEMENT // Kelas Ganti
+  EXTRA // Kelas Tambahan
   HOLIDAY // Cuti
   CANCELLED // Dibatalkan
 }
@@ -82,6 +83,7 @@ model Admin {
   reviewedSchoolExs SchoolExamination[]
   commentReplies    CommentReply[]
   galleryPhotos     GalleryPhoto[]
+  feePayments       FeePayment[]
 
   @@map("admin")
 }
@@ -96,7 +98,7 @@ model Parent {
   pinHash         String? /// Optional PIN upgrade — when set, login also asks for the PIN
   isActive        Boolean   @default(true)
   isDemo          Boolean   @default(false)
-  /// First login: when the parent confirmed their full name (step 1).
+  /// First login: when the parent set their Nama Panggilan / Samaran (step 1).
   nameConfirmedAt DateTime?
   /// First login: when the parent agreed to the consent statement (step 2). Null = must finish first-login steps.
   consentAt       DateTime?
@@ -152,6 +154,7 @@ model Student {
   tuitionResults TuitionResult[]
   comments       TeacherComment[]
   schoolExams    SchoolExamination[]
+  feePayments    FeePayment[]
 
   @@map("students")
 }
@@ -479,7 +482,7 @@ model ParentConsent {
   id         String   @id @default(cuid())
   parentId   String
   parentCode String /// Parent ID at the time of agreeing
-  fullName   String /// name the parent entered at first login
+  fullName   String /// Nama Panggilan / Samaran the parent entered at first login
   phone      String?
   statement  String /// the exact text agreed to
   agreedAt   DateTime @default(now())
@@ -504,6 +507,43 @@ model Notification {
 
   @@index([parentId, readAt])
   @@map("notifications")
+}
+
+/// Status Bayaran yuran bulanan (admin only).
+enum PaymentStatus {
+  PAID // Sudah Bayar
+  UNPAID // Belum Bayar
+  OVERDUE // Tertunggak
+}
+
+/// Fee per attended class, effective from a month onwards (admin only).
+/// The rate for a month is the row with the latest effectiveMonth <= that month.
+model FeeRate {
+  effectiveMonth String   @id /// "YYYY-MM"
+  ratePerClass   Float
+  updatedAt      DateTime @updatedAt
+
+  @@map("fee_rates")
+}
+
+/// Status Bayaran of one student for one month. The fee itself is never stored as
+/// input: it is always worked out from attendance (classes attended x rate).
+model FeePayment {
+  id          String        @id @default(cuid())
+  studentId   String
+  month       String /// "YYYY-MM"
+  status      PaymentStatus @default(UNPAID)
+  /// Fee shown when the admin marked it "Sudah Bayar" (to spot extra classes added later).
+  paidAmount  Float?
+  updatedById String
+  updatedAt   DateTime      @updatedAt
+
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  updatedBy Admin   @relation(fields: [updatedById], references: [id])
+
+  @@unique([studentId, month])
+  @@index([month])
+  @@map("fee_payments")
 }
 
 model AppSetting {

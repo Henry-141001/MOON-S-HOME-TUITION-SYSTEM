@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { RUNNING_SESSION_STATUSES, isRunningSession } from "@/lib/constants";
 import { APP_TIME_ZONE, addDaysISO, parseISODate, todayISO, toISODate } from "@/lib/dates";
 
 /** Current time in Malaysia as "HH:MM". */
@@ -18,7 +19,7 @@ export async function upcomingClassesForStudent(subjectIds: string[], take = 4) 
     where: {
       date: { gte: parseISODate(today) },
       // The reminder is only for classes that actually take place.
-      status: { in: ["SCHEDULED", "REPLACEMENT"] },
+      status: { in: [...RUNNING_SESSION_STATUSES] },
       OR: [
         { subjects: { none: {} } },
         ...(subjectIds.length ? [{ subjects: { some: { subjectId: { in: subjectIds } } } }] : []),
@@ -47,6 +48,7 @@ export async function upcomingClassesForStudent(subjectIds: string[], take = 4) 
               .join(", "),
       notes: s.notes,
       replacement: s.status === "REPLACEMENT",
+      extra: s.status === "EXTRA",
       date: s.dateISO,
       startTime: s.startTime,
       endTime: s.endTime,
@@ -101,7 +103,7 @@ export async function classScheduleForStudent(subjectIds: string[], days = 42) {
       })(),
       isNext: false,
     }));
-  const next = rows.find((r) => r.status === "SCHEDULED" || r.status === "REPLACEMENT");
+  const next = rows.find((r) => isRunningSession(r.status));
   if (next) next.isNext = true;
   return rows;
 }

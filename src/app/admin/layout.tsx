@@ -20,6 +20,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
     { href: "/admin/markah-tuisyen", label: "Markah Ujian Tuisyen", icon: "tuition" },
     { href: "/admin/ulasan", label: "Ulasan Guru", icon: "comments", badge: newReplies },
     { href: "/admin/galeri", label: "Galeri Kelas", icon: "gallery" },
+    { href: "/admin/yuran", label: "Status Yuran", icon: "fees" },
     { href: "/admin/keputusan-sekolah", label: "Keputusan Ujian Sekolah", icon: "school", badge: pending },
     { href: "/admin/laporan", label: "Laporan", icon: "reports" },
     // The observer gets the activity log instead of the admin's settings.

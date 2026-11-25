@@ -5,7 +5,7 @@ import { requireAdminView } from "@/lib/session";
 import { formatLongDate, parseISODate, todayISO, toISODate } from "@/lib/dates";
 import { Card, CardHeader, EmptyState, Input, Select, Table, Textarea, buttonClass, cn, td, th } from "@/components/ui";
 import { SessionStatusBadge, SubjectChip } from "@/components/schedule";
-import { SESSION_STATUSES, SESSION_STATUS_LABELS, type SessionStatusValue } from "@/lib/constants";
+import { SESSION_STATUSES, SESSION_STATUS_LABELS, isRunningSession, type SessionStatusValue } from "@/lib/constants";
 import { ActionForm, ConfirmButton, Field, InlineAction, Modal, SubmitButton } from "@/components/forms";
 import { cancelTuitionSession, createTuitionSession, deleteTuitionSession, updateTuitionSession } from "@/app/admin/_actions/attendance";
 import type { ActionState } from "@/lib/action-state";
@@ -116,7 +116,7 @@ function SessionTable({
             <td className={td}>
               <SessionStatusBadge
                 status={s.status}
-                isNext={!past && s.status === "SCHEDULED" && sessions.findIndex((x) => x.status === "SCHEDULED" || x.status === "REPLACEMENT") === i}
+                isNext={!past && sessions.findIndex((x) => isRunningSession(x.status)) === i}
               />
             </td>
             <td className={cn(td, "text-xs text-ink-soft")}>{s.notes || "—"}</td>
@@ -133,7 +133,7 @@ function SessionTable({
                     submitLabel="Simpan Perubahan"
                   />
                 </Modal>
-                {!past && (s.status === "SCHEDULED" || s.status === "REPLACEMENT") && (
+                {!past && isRunningSession(s.status) && (
                   <InlineAction action={cancelTuitionSession.bind(null, s.id)}>
                     <ConfirmButton
                       variant="ghost"
@@ -184,7 +184,7 @@ function SessionForm({
         label="Status"
         name="status"
         required
-        hint="Jika ditukar kepada Dibatalkan, Cuti atau Kelas Ganti, ibu bapa akan menerima notifikasi secara automatik."
+        hint="Jika ditukar kepada Dibatalkan, Cuti, Kelas Ganti atau Kelas Tambahan, ibu bapa akan menerima notifikasi secara automatik. Yuran dikira daripada kehadiran, termasuk kelas ganti dan kelas tambahan."
       >
         <Select id="status" name="status" defaultValue={defaults.status ?? "SCHEDULED"} required>
           {SESSION_STATUSES.map((st) => (

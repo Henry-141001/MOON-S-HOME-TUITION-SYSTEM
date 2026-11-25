@@ -79,7 +79,7 @@ export default async function ParentHome({ searchParams }: PageProps<"/ibu-bapa"
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-xs font-medium uppercase tracking-wide text-white/75">
-                {nextClass.ongoing ? "Kelas sedang berlangsung" : nextClass.replacement ? "Peringatan · Kelas ganti" : "Peringatan · Kelas seterusnya"}
+                {nextClass.ongoing ? "Kelas sedang berlangsung" : nextClass.replacement ? "Peringatan · Kelas ganti" : nextClass.extra ? "Peringatan · Kelas tambahan" : "Peringatan · Kelas seterusnya"}
               </p>
               <p className="mt-1 font-display text-xl font-semibold leading-snug">
                 {nextClass.when ? `${nextClass.when}, ` : ""}

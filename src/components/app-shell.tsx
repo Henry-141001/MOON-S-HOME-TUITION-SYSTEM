@@ -30,6 +30,7 @@ import {
   Trophy,
   UserRound,
   Users,
+  Wallet,
   X,
 } from "lucide-react";
 import { BrandLogo, cn } from "@/components/ui";
@@ -53,6 +54,7 @@ const ICONS = {
   gallery: Images,
   schedule: CalendarDays,
   notifications: Bell,
+  fees: Wallet,
 } as const;
 
 export type NavItem = { href: string; label: string; icon: keyof typeof ICONS; exact?: boolean; badge?: number };

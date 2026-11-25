@@ -16,7 +16,7 @@ type SessionInfo = {
 
 /** Statuses parents are told about automatically when a class is set to them. */
 export function statusNeedsNotice(status: SessionStatusValue) {
-  return status === "CANCELLED" || status === "HOLIDAY" || status === "REPLACEMENT";
+  return status === "CANCELLED" || status === "HOLIDAY" || status === "REPLACEMENT" || status === "EXTRA";
 }
 
 /**
@@ -45,7 +45,8 @@ export async function notifyParentsAboutSession(s: SessionInfo): Promise<number>
     CANCELLED: { title: "Kelas dibatalkan", body: `Kelas "${s.title}" pada ${when} telah dibatalkan.${note}` },
     HOLIDAY: { title: "Cuti — tiada kelas", body: `Tiada kelas "${s.title}" pada ${formatLongDate(s.date)} (cuti).${note}` },
     REPLACEMENT: { title: "Kelas ganti", body: `Kelas ganti "${s.title}" akan diadakan pada ${when}.${note}` },
-  }[s.status as "CANCELLED" | "HOLIDAY" | "REPLACEMENT"];
+    EXTRA: { title: "Kelas tambahan", body: `Kelas tambahan "${s.title}" akan diadakan pada ${when}.${note}` },
+  }[s.status as "CANCELLED" | "HOLIDAY" | "REPLACEMENT" | "EXTRA"];
 
   await prisma.notification.createMany({
     data: links.map((l) => ({ parentId: l.parentId, title: message.title, body: message.body.slice(0, 600), link: "/ibu-bapa/jadual" })),

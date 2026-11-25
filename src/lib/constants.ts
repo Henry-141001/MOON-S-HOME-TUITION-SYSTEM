@@ -100,12 +100,29 @@ export const CONSENT_STATEMENT = [CONSENT_TITLE, ...CONSENT_PARAGRAPHS, `[✓] $
 
 // ───────── Class timetable ─────────
 
-export const SESSION_STATUSES = ["SCHEDULED", "REPLACEMENT", "HOLIDAY", "CANCELLED"] as const;
+export const SESSION_STATUSES = ["SCHEDULED", "REPLACEMENT", "EXTRA", "HOLIDAY", "CANCELLED"] as const;
 export type SessionStatusValue = (typeof SESSION_STATUSES)[number];
 /** Labels in the admin form. Parents see "Kelas Seterusnya" on the nearest scheduled class. */
 export const SESSION_STATUS_LABELS: Record<SessionStatusValue, string> = {
   SCHEDULED: "Dijadualkan",
   REPLACEMENT: "Kelas Ganti",
+  EXTRA: "Kelas Tambahan",
   HOLIDAY: "Cuti",
   CANCELLED: "Dibatalkan",
 };
+
+/** Classes that actually take place (shown in reminders; attendance is charged as usual). */
+export const RUNNING_SESSION_STATUSES = ["SCHEDULED", "REPLACEMENT", "EXTRA"] as const satisfies readonly SessionStatusValue[];
+export const isRunningSession = (status: string) => (RUNNING_SESSION_STATUSES as readonly string[]).includes(status);
+
+// ───────── Status Yuran (admin only) ─────────
+
+export const PAYMENT_STATUSES = ["PAID", "UNPAID", "OVERDUE"] as const;
+export type PaymentStatusValue = (typeof PAYMENT_STATUSES)[number];
+export const PAYMENT_LABELS: Record<PaymentStatusValue, string> = {
+  PAID: "Sudah Bayar",
+  UNPAID: "Belum Bayar",
+  OVERDUE: "Tertunggak",
+};
+/** Fee per attended class when the admin has not set one yet (RM). */
+export const DEFAULT_FEE_PER_CLASS = 10;

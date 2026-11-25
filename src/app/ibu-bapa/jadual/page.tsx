@@ -24,7 +24,7 @@ export default async function ParentSchedulePage({ searchParams }: PageProps<"/i
       </div>
 
       <Card>
-        <CardHeader title="Kelas Akan Datang" description="Notifikasi dihantar secara automatik jika kelas dibatalkan, cuti atau ada kelas ganti." />
+        <CardHeader title="Kelas Akan Datang" description="Notifikasi dihantar secara automatik jika kelas dibatalkan, cuti, atau ada kelas ganti atau kelas tambahan." />
         {rows.length === 0 ? (
           <EmptyState title="Belum ada kelas dijadualkan" description="Jadual akan dipaparkan di sini sebaik sahaja guru menetapkannya." />
         ) : (

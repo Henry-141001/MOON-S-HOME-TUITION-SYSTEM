@@ -91,7 +91,7 @@ export default async function ParentDetailPage({ params }: PageProps<"/admin/ibu
                 <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-sm">
                   <dt className="text-muted">ID Ibu Bapa</dt>
                   <dd className="font-medium">{parent.consents[0].parentCode}</dd>
-                  <dt className="text-muted">Nama penuh</dt>
+                  <dt className="text-muted">Nama panggilan / samaran</dt>
                   <dd className="font-medium">{parent.consents[0].fullName}</dd>
                   <dt className="text-muted">No. telefon</dt>
                   <dd className="font-medium">{parent.consents[0].phone || "—"}</dd>

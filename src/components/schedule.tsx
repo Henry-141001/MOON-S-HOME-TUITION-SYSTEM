@@ -1,5 +1,5 @@
 // Class timetable pieces shared by the admin and parent pages.
-import { Ban, CalendarClock, Palmtree, RefreshCw } from "lucide-react";
+import { Ban, CalendarClock, CalendarPlus, Palmtree, RefreshCw } from "lucide-react";
 import { cn } from "@/components/ui";
 import { subjectColor } from "@/lib/subject-colors";
 import type { SessionStatusValue } from "@/lib/constants";
@@ -28,6 +28,7 @@ const STATUS_STYLE: Record<SessionStatusValue | "NEXT", { label: string; classNa
   NEXT: { label: "Kelas Seterusnya", className: "bg-navy-600 text-white ring-navy-600", Icon: CalendarClock },
   SCHEDULED: { label: "Dijadualkan", className: "bg-navy-50 text-navy-700 ring-navy-200", Icon: CalendarClock },
   REPLACEMENT: { label: "Kelas Ganti", className: "bg-amber-soft text-amber-ink ring-amber-soft", Icon: RefreshCw },
+  EXTRA: { label: "Kelas Tambahan", className: "bg-success-soft text-success-ink ring-success-ring", Icon: CalendarPlus },
   HOLIDAY: { label: "Cuti", className: "bg-sky-soft text-sky-ink ring-sky-soft", Icon: Palmtree },
   CANCELLED: { label: "Dibatalkan", className: "bg-rose-soft text-rose-ink ring-rose-soft", Icon: Ban },
 };
@@ -39,7 +40,7 @@ export function SessionStatusBadge({ status, isNext = false }: { status: Session
   return (
     <span className={cn("inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset", className)}>
       <Icon className="size-3.5" aria-hidden />
-      {isNext && status === "REPLACEMENT" ? "Kelas Seterusnya · Ganti" : label}
+      {isNext && status === "REPLACEMENT" ? "Kelas Seterusnya · Ganti" : isNext && status === "EXTRA" ? "Kelas Seterusnya · Tambahan" : label}
     </span>
   );
 }

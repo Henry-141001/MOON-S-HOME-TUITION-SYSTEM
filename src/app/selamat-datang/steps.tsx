@@ -6,26 +6,21 @@ import { ActionForm, Field, SubmitButton } from "@/components/forms";
 import { Input } from "@/components/ui";
 import { confirmParentName, giveConsent } from "./actions";
 
-export function NameStep({ defaultName, askPhone }: { defaultName: string; askPhone: boolean }) {
+export function NameStep({ defaultName }: { defaultName: string }) {
   return (
     <ActionForm action={confirmParentName} className="mt-5 space-y-4" showSuccess={false}>
-      <Field label="Nama Penuh Ibu Bapa / Penjaga" name="name" required hint="Seperti dalam kad pengenalan.">
+      <Field label="Nama Panggilan / Samaran" name="name" required>
         <Input
           id="name"
           name="name"
           defaultValue={defaultName}
-          autoComplete="name"
+          autoComplete="nickname"
           required
-          minLength={3}
+          minLength={2}
           maxLength={120}
           className="h-12 text-base"
         />
       </Field>
-      {askPhone && (
-        <Field label="No. Telefon" name="phone" required hint="Untuk guru menghubungi anda tentang perkembangan anak.">
-          <Input id="phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="012-345 6789" required className="h-12 text-base" />
-        </Field>
-      )}
       <SubmitButton size="lg" className="w-full" pendingText="Menyimpan…">
         Simpan &amp; Teruskan <ArrowRight className="size-4" />
       </SubmitButton>

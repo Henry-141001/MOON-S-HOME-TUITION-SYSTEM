@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { SessionStatusBadge } from "@/components/schedule";
-import { CalendarCheck, CalendarClock, CalendarX, ChevronRight, ClipboardCheck, GraduationCap, Percent } from "lucide-react";
+import { FeeSummaryCards, FeeTable } from "@/components/fees";
+import { formatRM, monthFees } from "@/lib/fees";
+import { CalendarCheck, CalendarClock, CalendarX, ChevronRight, ClipboardCheck, GraduationCap, Percent, Wallet } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdminView } from "@/lib/session";
-import { todayISO, parseISODate, toISODate, formatDate, formatLongDate, formatShortDate } from "@/lib/dates";
+import { todayISO, parseISODate, toISODate, formatDate, formatLongDate, formatMonth, formatShortDate } from "@/lib/dates";
 import { attendanceCounts, average, percent } from "@/lib/analytics";
 import { COMMENT_LABELS, SUBMISSION_LABELS } from "@/lib/constants";
 import { schoolExamTitle } from "@/lib/records";
@@ -82,6 +84,7 @@ export default async function AdminDashboard() {
       }),
       prisma.schoolExamination.count({ where: { status: "PENDING", ...activeStudent } }),
     ]);
+  const fees = await monthFees(today.slice(0, 7));
 
   const todayCounts = attendanceCounts(todayAttendance);
   const overall = attendanceCounts(allAttendance);
@@ -173,6 +176,24 @@ export default async function AdminDashboard() {
           </span>
         </Link>
       )}
+
+      {/* Status Yuran (admin only) — worked out from this month's attendance */}
+      <Card className="mt-6">
+        <CardHeader
+          title={`Status Yuran — ${formatMonth(fees.month)}`}
+          description={`Dikira automatik daripada kehadiran · ${formatRM(fees.ratePerClass)} sekelas`}
+          icon={<Wallet className="size-4" />}
+          actions={
+            <ButtonLink href="/admin/yuran" variant="ghost" size="sm" arrow>
+              Bulan lain
+            </ButtonLink>
+          }
+        />
+        <CardBody>
+          <FeeSummaryCards summary={fees.summary} />
+        </CardBody>
+        <FeeTable fees={fees} />
+      </Card>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-2">
         <Card>

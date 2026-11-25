@@ -9,7 +9,7 @@ import { ConsentStep, NameStep } from "./steps";
 export const metadata = { title: "Selamat Datang" };
 
 /**
- * First login for a parent: 1) confirm full name, 2) tick and agree.
+ * First login for a parent: 1) Nama Panggilan / Samaran, 2) tick and agree.
  * There is no way around it — every parent page and action sends the parent
  * back here until both steps are done. After that this page is never shown again.
  */
@@ -17,7 +17,7 @@ export default async function ParentSetupPage() {
   const session = await requireParentForSetup();
   const parent = await prisma.parent.findUniqueOrThrow({
     where: { id: session.id },
-    select: { parentCode: true, name: true, phone: true, nameConfirmedAt: true, consentAt: true },
+    select: { parentCode: true, name: true, nameConfirmedAt: true, consentAt: true },
   });
   if (parent.consentAt) redirect("/ibu-bapa");
   const step = parent.nameConfirmedAt ? 2 : 1;
@@ -41,7 +41,7 @@ export default async function ParentSetupPage() {
             <>
               <h1 className="font-display text-2xl font-semibold text-ink">Selamat datang!</h1>
               <p className="mt-1 text-[15px] text-ink-soft">Sila kemaskini nama anda.</p>
-              <NameStep defaultName={parent.name} askPhone={!parent.phone} />
+              <NameStep defaultName={parent.name} />
             </>
           ) : (
             <>
